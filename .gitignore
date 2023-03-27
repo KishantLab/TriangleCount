@@ -26,4 +26,8 @@ demo/*
 Dataset/tsv_files/*
 *.csr.*
 *.csr
+*metis*
+*.part
+*.part.*
+*part*
 
