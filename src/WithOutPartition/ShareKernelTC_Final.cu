@@ -89,7 +89,7 @@ __global__ void Find_Triangle(unsigned long long int *g_col_index, unsigned long
 				{
 					unsigned long long int result = 0;
 					result = Search(g_col_index[id+start2],neb,size_list1);
-					//printf("\nedge(%llu , %llu) : %llu , tid : %llu, size_list1 :%llu , size_list2: %llu, start2 :%llu , end2 :%llu skey:%llu, neb[0]:%llu ,neb[%llu]:%llu",bid, neb[i], result,tid,size_list1+1,size_list2+1,start2,end2,g_col_index[id+start2],neb[0],size_list1,neb[size_list1]);
+					printf("\nedge(%llu , %llu) : %llu , tid : %llu, size_list1 :%llu , size_list2: %llu, start2 :%llu , end2 :%llu skey:%llu, neb[0]:%llu ,neb[%llu]:%llu",bid, neb[i], result,tid,size_list1+1,size_list2+1,start2,end2,g_col_index[id+start2],neb[0],size_list1,neb[size_list1]);
 					//atomicAdd(&g_sum[0],result);
 					//pritf("\nedge(%llu , %llu) src : %llu dst :%llu ", bid,neb[i],size_list1+1,size_list2+1);
 					triangle += result;

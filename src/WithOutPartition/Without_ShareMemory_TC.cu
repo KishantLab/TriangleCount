@@ -5,7 +5,7 @@
 #include<time.h>
 
 #define N_THREADS_PER_BLOCK 256
-#define SHARED_MEM 256
+#define SHARED_MEM 1024
 
 inline cudaError_t checkCuda(cudaError_t result)
 {
@@ -74,6 +74,7 @@ __global__ void Find_Triangle(unsigned long long int *g_col_index, unsigned long
 		if(tid <= size_list1)
 		{
 			neb[tid] = g_col_index[tid+start];
+      printf("%llu ",neb[tid]);
 		}
 		__syncthreads();
 		for( unsigned long long int i = 0; i <= size_list1; i++)
@@ -89,9 +90,9 @@ __global__ void Find_Triangle(unsigned long long int *g_col_index, unsigned long
 				{
 					unsigned long long int result = 0;
 					result = Search(g_col_index[id+start2],neb,size_list1);
-					//printf("\nedge(%llu , %llu) : %llu , tid : %llu, size_list1 :%llu , size_list2: %llu, start2 :%llu , end2 :%llu skey:%llu, neb[0]:%llu ,neb[%llu]:%llu",bid, neb[i], result,tid,size_list1+1,size_list2+1,start2,end2,g_col_index[id+start2],neb[0],size_list1,neb[size_list1]);
+					printf("\nedge(%llu , %llu) : %llu , tid : %llu, size_list1 :%llu , size_list2: %llu, start2 :%llu , end2 :%llu skey:%llu, neb[0]:%llu ,neb[%llu]:%llu",bid, neb[i], result,tid,size_list1+1,size_list2+1,start2,end2,g_col_index[id+start2],neb[0],size_list1,neb[size_list1]);
 					//atomicAdd(&g_sum[0],result);
-					printf("\nedge(%llu , %llu) src : %llu dst :%llu ", bid,neb[i],size_list1+1,size_list2+1);
+					//printf("\nedge(%llu , %llu) src : %llu dst :%llu ", bid,neb[i],size_list1+1,size_list2+1);
 					triangle += result;
 				}
 			}
@@ -223,6 +224,8 @@ int main(int argc, char *argv[])
 		cudaMalloc(&g_row_ptr,sizeof(unsigned long long int)*row_ptr_s);
     unsigned long long int *g_col_index;  //GPU MEMORY ALOOCATION
 		cudaMalloc(&g_col_index,sizeof(unsigned long long int)*col_idx_s);
+    // int *neb;  //GPU MEMORY ALOOCATION
+    // cudaMalloc(&neb,sizeof( int)*N_THREADS_PER_BLOCK);
 
 		//**** SEND DATA CPU TO GPU *********************
     cudaMemcpy(g_row_ptr,row_ptr,sizeof(unsigned long long int)*row_ptr_s,cudaMemcpyHostToDevice);

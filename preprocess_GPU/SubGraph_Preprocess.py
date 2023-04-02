@@ -5,7 +5,6 @@ import pandas as pd
 import sys
 import dgl
 import csv
-import pymetis
 import time
 import torch as th
 from scipy.io import mmread
