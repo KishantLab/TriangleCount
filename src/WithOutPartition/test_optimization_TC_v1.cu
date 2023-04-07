@@ -5,7 +5,7 @@
 #include<time.h>
 
 #define N_THREADS_PER_BLOCK 256
-#define SHARED_MEM 256
+#define SHARED_MEM 1024
 
 inline cudaError_t checkCuda(cudaError_t result)
 {
@@ -69,49 +69,52 @@ __global__ void Find_Triangle(unsigned long long int *g_col_index, unsigned long
 	unsigned long long int size_list1 = end - start;
 	unsigned long long int triangle = 0;
 	//if(size_list1 ==0 ) return;
-	if(size_list1 < N_THREADS_PER_BLOCK)
-	{
-		if(tid <= size_list1)
-		{
-			neb[tid] = g_col_index[tid+start];
-		}
-		__syncthreads();
-		for( unsigned long long int i = 0; i <= size_list1; i++)
-		{
-			unsigned long long int start2 = g_row_ptr[neb[i]];
-			unsigned long long int end2 = g_row_ptr[neb[i]+1]-1;
-			unsigned long long int size_list2 = end2 - start2;
-			unsigned long long int M = ceil((float)(size_list2 +1)/N_THREADS_PER_BLOCK);
-			for( unsigned long long int k = 0; k < M; k++)
-			{
-				unsigned long long int id = N_THREADS_PER_BLOCK * k + tid;
-				if(id <= size_list2)
-				{
-					unsigned long long int result = 0;
-					result = Search(g_col_index[id+start2],neb,size_list1);
-					//printf("\nedge(%llu , %llu) : %llu , tid : %llu, size_list1 :%llu , size_list2: %llu, start2 :%llu , end2 :%llu skey:%llu, neb[0]:%llu ,neb[%llu]:%llu",bid, neb[i], result,tid,size_list1+1,size_list2+1,start2,end2,g_col_index[id+start2],neb[0],size_list1,neb[size_list1]);
-					//atomicAdd(&g_sum[0],result);
-					//pritf("\nedge(%llu , %llu) src : %llu dst :%llu ", bid,neb[i],size_list1+1,size_list2+1);
-					triangle += result;
-				}
-			}
-		}
-	}
-	else
-	{
-		unsigned long long int N = ceil((float)(size_list1 +1)/ N_THREADS_PER_BLOCK);
+	// if(size_list1 < SHARED_MEM)
+	// {
+	// 	if(tid <= size_list1)
+	// 	{
+	// 		neb[tid] = g_col_index[tid+start];
+	// 	}
+	// 	__syncthreads();
+	// 	for( unsigned long long int i = 0; i <= size_list1; i++)
+	// 	{
+	// 		unsigned long long int start2 = g_row_ptr[neb[i]];
+	// 		unsigned long long int end2 = g_row_ptr[neb[i]+1]-1;
+	// 		unsigned long long int size_list2 = end2 - start2;
+	// 		unsigned long long int M = ceil((float)(size_list2 +1)/N_THREADS_PER_BLOCK);
+	// 		for( unsigned long long int k = 0; k < M; k++)
+	// 		{
+	// 			unsigned long long int id = N_THREADS_PER_BLOCK * k + tid;
+	// 			if(id <= size_list2)
+	// 			{
+	// 				unsigned long long int result = 0;
+	// 				result = Search(g_col_index[id+start2],neb,size_list1);
+	// 				//printf("\nedge(%llu , %llu) : %llu , tid : %llu, size_list1 :%llu , size_list2: %llu, start2 :%llu , end2 :%llu skey:%llu, neb[0]:%llu ,neb[%llu]:%llu",bid, neb[i], result,tid,size_list1+1,size_list2+1,start2,end2,g_col_index[id+start2],neb[0],size_list1,neb[size_list1]);
+	// 				//atomicAdd(&g_sum[0],result);
+	// 				//pritf("\nedge(%llu , %llu) src : %llu dst :%llu ", bid,neb[i],size_list1+1,size_list2+1);
+	// 				triangle += result;
+	// 			}
+	// 		}
+	// 	}
+	// }
+	// else
+//	{
+		unsigned long long int N = ceil((float)(size_list1 +1)/ SHARED_MEM);
 		unsigned long long int remining_size = size_list1;
-		unsigned long long int size = N_THREADS_PER_BLOCK-1;
+		unsigned long long int size = SHARED_MEM-1;
 		for( unsigned long long int i = 0; i < N; i++)
 		{
-			unsigned long long int id = N_THREADS_PER_BLOCK * i + tid;
+			unsigned long long int id = SHARED_MEM * i + tid;
 			if( remining_size > size)
 			{
-				if(id <= size_list1)
-				{
-					neb[tid] = g_col_index[id+start];
-					//printf(" neb : %llu", neb[tid]);
-				}
+        for (unsigned long long int k=0; k<= size_list1; k+=N_THREADS_PER_BLOCK)
+        {
+  				if(id <= size_list1)
+  				{
+  					neb[id] = g_col_index[id+start];
+  					//printf(" neb : %llu", neb[tid]);
+  				}
+        }
 				__syncthreads();
 				for( unsigned long long int j = start; j <= end; j++)
 				{
@@ -168,7 +171,7 @@ __global__ void Find_Triangle(unsigned long long int *g_col_index, unsigned long
 			}
 			__syncthreads();
 		}
-	}
+//	}
 	atomicAdd(&g_sum[0],triangle);
 }
 int main(int argc, char *argv[])

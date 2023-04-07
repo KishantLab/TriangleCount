@@ -55,19 +55,29 @@ __global__ void Find_Triangle(unsigned long long int *g_col_index, unsigned long
 	//unsigned long long int id = threadIdx.x + blockIdx.x * blockDim.x ; //Define id with thread id
 	unsigned long long int bid = blockIdx.x;
 	unsigned long long int tid = threadIdx.x;
-	__shared__ unsigned long long int start;
-	__shared__ unsigned long long int end;
+	//__shared__ unsigned long long int start;
+	//__shared__ unsigned long long int end;
+   unsigned long long int start;
+   unsigned long long int end;
 	__shared__ unsigned long long int neb[SHARED_MEM];
 
-	if(tid ==0)
-	{
+//	if(tid ==0)
+	//{
 		start = g_row_ptr[bid];
 		end = g_row_ptr[bid+1]-1;
 		//printf("hello\n");
-	}
-	__syncthreads();
+//	}
+//	__syncthreads();
 	unsigned long long int size_list1 = end - start;
-	unsigned long long int triangle = 0;
+  unsigned long long int triangle = 0;
+  if(size_list1 < 2)
+  {
+    triangle =0;
+  }
+	else
+  {
+
+  //}
 	//if(size_list1 ==0 ) return;
 	if(size_list1 < N_THREADS_PER_BLOCK)
 	{
@@ -81,6 +91,14 @@ __global__ void Find_Triangle(unsigned long long int *g_col_index, unsigned long
 			unsigned long long int start2 = g_row_ptr[neb[i]];
 			unsigned long long int end2 = g_row_ptr[neb[i]+1]-1;
 			unsigned long long int size_list2 = end2 - start2;
+      // if(size_list2 < 2 )
+      // {
+      //   triangle =0;
+      // }
+      // else
+      // {
+
+      //}
 			unsigned long long int M = ceil((float)(size_list2 +1)/N_THREADS_PER_BLOCK);
 			for( unsigned long long int k = 0; k < M; k++)
 			{
@@ -95,6 +113,7 @@ __global__ void Find_Triangle(unsigned long long int *g_col_index, unsigned long
 					triangle += result;
 				}
 			}
+    //}
 		}
 	}
 	else
@@ -118,6 +137,14 @@ __global__ void Find_Triangle(unsigned long long int *g_col_index, unsigned long
 					unsigned long long int start2 = g_row_ptr[g_col_index[j]];
 					unsigned long long int end2 = g_row_ptr[g_col_index[j]+1]-1;
 					unsigned long long int size_list2 = end2 - start2;
+          // if(size_list2 < 2)
+          // {
+          //   triangle =0;
+          // }
+          // else
+          // {
+
+          //}
 					unsigned long long int M = ceil((float)(size_list2 +1)/N_THREADS_PER_BLOCK);
 					for( unsigned long long int k = 0; k < M; k++)
 					{
@@ -132,6 +159,7 @@ __global__ void Find_Triangle(unsigned long long int *g_col_index, unsigned long
 							triangle += result;
 						}
 					}
+        //}
 				}
 				__syncthreads();
 				remining_size = remining_size-(size+1);
@@ -150,6 +178,13 @@ __global__ void Find_Triangle(unsigned long long int *g_col_index, unsigned long
 					unsigned long long int start2 = g_row_ptr[g_col_index[j]];
 					unsigned long long int end2 = g_row_ptr[g_col_index[j]+1]-1;
 					unsigned long long int size_list2 = end2 - start2;
+          // if(size_list2 < 2)
+          // {
+          //   triangle =0;
+          // }
+          // else
+          // {
+          //}
 					unsigned long long int M = ceil((float)(size_list2 +1)/ N_THREADS_PER_BLOCK);
 					for (unsigned long long int k = 0; k < M; k++)
 					{
@@ -164,12 +199,15 @@ __global__ void Find_Triangle(unsigned long long int *g_col_index, unsigned long
 							triangle += result;
 						}
 					}
+      //  }
 				}
 			}
 			__syncthreads();
 		}
 	}
+}
 	atomicAdd(&g_sum[0],triangle);
+
 }
 int main(int argc, char *argv[])
 {

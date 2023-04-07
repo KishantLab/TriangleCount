@@ -69,7 +69,7 @@ __global__ void Find_Triangle(unsigned long long int *g_col_index, unsigned long
 	unsigned long long int size_list1 = end - start;
 	unsigned long long int triangle = 0;
 	//if(size_list1 ==0 ) return;
-	if(size_list1 < N_THREADS_PER_BLOCK)
+	if(size_list1 < SHARED_MEM)
 	{
 		if(tid <= size_list1)
 		{
@@ -99,12 +99,12 @@ __global__ void Find_Triangle(unsigned long long int *g_col_index, unsigned long
 	}
 	else
 	{
-		unsigned long long int N = ceil((float)(size_list1 +1)/ N_THREADS_PER_BLOCK);
+		unsigned long long int N = ceil((float)(size_list1 +1)/ SHARED_MEM);
 		unsigned long long int remining_size = size_list1;
-		unsigned long long int size = N_THREADS_PER_BLOCK-1;
+		unsigned long long int size = SHARED_MEM-1;
 		for( unsigned long long int i = 0; i < N; i++)
 		{
-			unsigned long long int id = N_THREADS_PER_BLOCK * i + tid;
+			unsigned long long int id = SHARED_MEM * i + tid;
 			if( remining_size > size)
 			{
 				if(id <= size_list1)
