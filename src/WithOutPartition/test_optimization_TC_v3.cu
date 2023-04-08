@@ -4,7 +4,7 @@
 #include<math.h>
 #include<time.h>
 
-#define N_THREADS_PER_BLOCK 256
+//#define N_THREADS_PER_BLOCK 256
 //#define SHARED_MEM 1024
 
 inline cudaError_t checkCuda(cudaError_t result)
@@ -18,82 +18,75 @@ inline cudaError_t checkCuda(cudaError_t result)
   return result;
 }
 
-//-------------------intersection function ----------------------------------
-__device__ int Search (unsigned long long int skey , unsigned long long int *neb, unsigned long long int end, unsigned long long int start)
+#define N_THREADS_PER_BLOCK 1024
+#define SHARED_MEM_SIZE (N_THREADS_PER_BLOCK * sizeof(unsigned long long int))
+__device__ unsigned long long int Search(unsigned long long int skey, unsigned long long int *arr, unsigned long long int end, unsigned long long int start, unsigned long long int index2, unsigned long long int *g_row_ptr)
 {
-	unsigned long long int total = 0;
-	if(skey < neb[start] || skey > neb[end])
-	{
-		return 0;
-	}
-	else if(skey == neb[start] || skey == neb[end])
-	{
-		return 1;
-	}
-	else
-	{
-		unsigned long long int lo = start+1;
-		unsigned long long int hi = end-1;
-		unsigned long long int mid=0;
-		while( lo <= hi)
-		{
-			mid = (hi+lo)/2;
-			//printf("\nskey :%llu , mid : %llu ",skey,neb[mid]);
-			if( neb[mid] < skey){lo=mid+1;}
-			else if(neb[mid] > skey){hi=mid-1;}
-			else if(neb[mid] == skey)
-			{
-				total++;
-				break;
-			}
-		}
-	}
-	return total;
-}
-__global__ void Find_Triangle(unsigned long long int *g_col_index, unsigned long long int *g_row_ptr ,unsigned long long int *g_sum )
-{
-  __shared__ unsigned long long int s_sum[N_THREADS_PER_BLOCK];
-	unsigned long long int bid = blockIdx.x;
-	unsigned long long int tid = threadIdx.x;
-  unsigned long long int start;
-	unsigned long long int end;
-	start = g_row_ptr[bid];
-	end = g_row_ptr[bid+1]-1;
-	//unsigned long long int size_list1 = end - start;
-	unsigned long long int triangle = 0;
-		for( unsigned long long int i = start; i <= end; i++)
-		{
-			unsigned long long int start2 = g_row_ptr[g_col_index[i]];
-			unsigned long long int end2 = g_row_ptr[g_col_index[i]+1]-1;
-			unsigned long long int size_list2 = end2 - start2;
-			unsigned long long int M = ceil((float)(size_list2+1)/N_THREADS_PER_BLOCK);
-			for( unsigned long long int k = 0; k < M; k++)
-			{
-				unsigned long long int id = N_THREADS_PER_BLOCK * k + tid;
-				if(id <= size_list2)
-				{
-					unsigned long long int result = 0;
-					result = Search(g_col_index[id+start2],g_col_index,end,start);
-					//printf("\nedge(%llu , %llu) : %llu , tid : %llu, size_list1 :%llu , size_list2: %llu, start2 :%llu , end2 :%llu skey:%llu, g_col_index[0]:%llu ,g_col_index[%llu]:%llu",bid, g_col_index[i], result,tid,size_list1+1,size_list2+1,start2,end2,g_col_index[id+start2],g_col_index[start],size_list1,g_col_index[end]);
-					//atomicAdd(&g_sum[0],result);
-					//printf("\nedge(%llu , %llu) src : %llu dst :%llu ", bid,neb[i],size_list1+1,size_list2+1);
-					triangle += result;
-				}
-			}
-		}
-	//atomicAdd(&g_sum[0],triangle);
-  s_sum[tid] = triangle;
-    __syncthreads();
-    if (tid == 0)
+    for(unsigned long long int i = start; i <= end; i++)
     {
-        unsigned long long int block_sum = 0;
-        for (int i = 0; i < N_THREADS_PER_BLOCK; i++)
+        if(skey == arr[i])
         {
-            block_sum += s_sum[i];
+            unsigned long long int start3 = g_row_ptr[skey];
+            unsigned long long int end3 = g_row_ptr[skey+1]-1;
+            for(unsigned long long int j = start3; j <= end3; j++)
+            {
+                if(arr[j] == index2)
+                {
+                    return 1;
+                }
+            }
         }
-        g_sum[bid] = block_sum;
     }
+
+    return 0;
 }
+__global__ void Find_Triangle(unsigned long long int *g_col_index, unsigned long long int *g_row_ptr, unsigned long long int *g_sum )
+{
+    unsigned long long int bid = blockIdx.x;
+    unsigned long long int tid = threadIdx.x;
+
+    unsigned long long int start = g_row_ptr[bid];
+    unsigned long long int end = g_row_ptr[bid+1]-1;
+    unsigned long long int size_list1 = end - start;
+
+    extern __shared__ unsigned long long int sdata[];
+    unsigned long long int *shared_col_index = (unsigned long long int *)sdata;
+    for(unsigned long long int i = tid; i < size_list1; i += N_THREADS_PER_BLOCK)
+    {
+        shared_col_index[i] = g_col_index[start + i];
+    }
+    __syncthreads();
+
+    unsigned long long int triangle = 0;
+    for(unsigned long long int i = start; i <= end; i++)
+    {
+        unsigned long long int start2 = g_row_ptr[g_col_index[i]];
+        unsigned long long int end2 = g_row_ptr[g_col_index[i]+1]-1;
+        unsigned long long int size_list2 = end2 - start2;
+
+        unsigned long long int M = ceil((float)(size_list2+1)/N_THREADS_PER_BLOCK);
+        for(unsigned long long int k = 0; k < M; k++)
+        {
+            unsigned long long int id = N_THREADS_PER_BLOCK * k + tid;
+            unsigned long long int index2 = id + start2;
+
+            if(id <= size_list2)
+            {
+                unsigned long long int result = 0;
+                for(unsigned long long int j = 0; j < size_list1; j++)
+                {
+                    unsigned long long int skey = shared_col_index[j];
+                    result += Search(skey, g_col_index, end, start, index2, g_row_ptr);
+                }
+                triangle += result;
+            }
+        }
+    }
+
+    atomicAdd(&g_sum[0],triangle);
+}
+
+
 int main(int argc, char *argv[])
 {
 	cudaEvent_t start3,stop3;

@@ -4,8 +4,6 @@
 #include<math.h>
 #include<time.h>
 
-#define NUM_VERTICES 9999999999
-#define NUM_EDGES 9999999999
 #define N_THREADS_PER_BLOCK 256
 #define SHARED_MEM 256
 
@@ -75,6 +73,7 @@ __global__ void Find_Triangle(int *g_col_index, int *g_row_ptr, int vertex, int 
 			int end2 = g_row_ptr[neb[i]+1]-1;
 			int size_list2 = end2 - start2;
 			int M = ceil((float)(size_list2 +1)/N_THREADS_PER_BLOCK);
+			#pragma unroll
 			for( int k = 0; k < M; k++)
 			{
 				int id = N_THREADS_PER_BLOCK * k + tid;
@@ -112,6 +111,7 @@ __global__ void Find_Triangle(int *g_col_index, int *g_row_ptr, int vertex, int 
 					int end2 = g_row_ptr[g_col_index[j]+1]-1;
 					int size_list2 = end2 - start2;
 					int M = ceil((float)(size_list2 +1)/N_THREADS_PER_BLOCK);
+					#pragma unroll
 					for( int k = 0; k < M; k++)
 					{
 						int tempid = N_THREADS_PER_BLOCK * k + tid;
@@ -144,6 +144,7 @@ __global__ void Find_Triangle(int *g_col_index, int *g_row_ptr, int vertex, int 
 					int end2 = g_row_ptr[g_col_index[j]+1]-1;
 					int size_list2 = end2 - start2;
 					int M = ceil((float)(size_list2 +1)/ N_THREADS_PER_BLOCK);
+					#pragma unroll
 					for (int k = 0; k < M; k++)
 					{
 						int tempid = N_THREADS_PER_BLOCK * k + tid;

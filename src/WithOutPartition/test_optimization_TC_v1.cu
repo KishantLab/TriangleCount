@@ -5,7 +5,7 @@
 #include<time.h>
 
 #define N_THREADS_PER_BLOCK 256
-#define SHARED_MEM 1024
+#define SHARED_MEM 2048
 
 inline cudaError_t checkCuda(cudaError_t result)
 {
