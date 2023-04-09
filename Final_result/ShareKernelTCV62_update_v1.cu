@@ -191,14 +191,6 @@ __global__ void Find_Triangle(int *g_col_index, int *g_row_ptr, int vertex, int 
 }
 int main(int argc, char *argv[])
 {
-  cudaEvent_t start3,stop3;
-	cudaEventCreate(&start3);
-	cudaEventCreate(&stop3);
-
-	cudaEvent_t start_sum,stop_sum;
-	cudaEventCreate(&start_sum);
-	cudaEventCreate(&stop_sum);
-
 	int Edges=0,data=0,Vertex=0, row_ptr_s=0, col_idx_s=0; //vertex=10670, data allocation from file..
 //**********file operations***************
 	FILE *file;
@@ -246,58 +238,71 @@ int main(int argc, char *argv[])
     cudaMemcpy(g_row_ptr,row_ptr,sizeof( int)*row_ptr_s,cudaMemcpyHostToDevice);
 		cudaMemcpy(g_col_index,col_index,sizeof( int)*col_idx_s,cudaMemcpyHostToDevice);
 
-		// unsigned long long int *sum;
-		// sum = (unsigned long long int *)malloc(sizeof(unsigned long long int)*Vertex);
-
-		unsigned long long int *g_sum;
-		cudaMalloc((void**)&g_sum,sizeof(unsigned long long int)*Vertex);
-
-		unsigned long long int *out;
-		out = (unsigned long long int *)malloc(sizeof(unsigned long long int)*1);
-
-		unsigned long long int *d_out;
-		cudaMalloc((void**)&d_out,sizeof(unsigned long long int)*1);
-
 		//****************KERNEL CALLED *****************
-		cudaEventRecord(start3);
-		Find_Triangle<<<Vertex,N_THREADS_PER_BLOCK>>>(g_col_index,g_row_ptr,Vertex,Edges,g_sum);
-		cudaEventRecord(stop3);
-		cudaDeviceSynchronize();
-		cudaEventSynchronize(stop3);
-		//cudaMemcpy(sum,g_sum,sizeof(unsigned long long int)*Vertex,cudaMemcpyDeviceToHost);
-		//unsigned long long int Triangle = sum[0];
-		cudaEventRecord(start_sum);
-		void *d_temp_storage = NULL;
-		size_t temp_storage_bytes = 0;
-		cub::DeviceReduce::Sum(d_temp_storage, temp_storage_bytes, g_sum, d_out, Vertex);
-		// Allocate temporary storage
-		cudaMalloc(&d_temp_storage, temp_storage_bytes);
-		// Run sum-reduction
-		cub::DeviceReduce::Sum(d_temp_storage, temp_storage_bytes, g_sum, d_out, Vertex);
-		// d_out <-- [38]
-		cudaEventRecord(stop_sum);
-		cudaDeviceSynchronize();
-		cudaMemcpy(out,d_out,sizeof(unsigned long long int)*1,cudaMemcpyDeviceToHost);
-		unsigned long long int Triangle = out[0];
-		cudaEventSynchronize(stop_sum);
-		float milliseconds = 0;
-		cudaEventElapsedTime(&milliseconds, start3, stop3);
-		//printf("\nSearch : %.4f sec ",milliseconds/1000);
-		float milliseconds_sum = 0;
-		cudaEventElapsedTime(&milliseconds_sum, start_sum, stop_sum);
-		float total_time = (milliseconds/1000) + (milliseconds_sum/1000);
-		printf("\nSearch : %.6f sec Vertex : %d Edge : %d Triangle : %llu  Sum_result : %.6f Sec, total_time : %.6f Sec\n",milliseconds/1000, Vertex, col_idx_s, Triangle, milliseconds_sum/1000, total_time);
+		float total_exe_time = 0;
+		for(int i=0; i < 3; i++)
+		{
 
+				cudaEvent_t start3,stop3;
+				cudaEventCreate(&start3);
+				cudaEventCreate(&stop3);
 
+				cudaEvent_t start_sum,stop_sum;
+				cudaEventCreate(&start_sum);
+				cudaEventCreate(&stop_sum);
+
+				unsigned long long int *g_sum;
+				cudaMalloc((void**)&g_sum,sizeof(unsigned long long int)*Vertex);
+
+				unsigned long long int *out;
+				out = (unsigned long long int *)malloc(sizeof(unsigned long long int)*1);
+
+				unsigned long long int *d_out;
+				cudaMalloc((void**)&d_out,sizeof(unsigned long long int)*1);
+
+				cudaEventRecord(start3);
+				Find_Triangle<<<Vertex,N_THREADS_PER_BLOCK>>>(g_col_index,g_row_ptr,Vertex,Edges,g_sum);
+				cudaEventRecord(stop3);
+				cudaDeviceSynchronize();
+				cudaEventSynchronize(stop3);
+				//cudaMemcpy(sum,g_sum,sizeof(unsigned long long int)*Vertex,cudaMemcpyDeviceToHost);
+				//unsigned long long int Triangle = sum[0];
+				cudaEventRecord(start_sum);
+				void *d_temp_storage = NULL;
+				size_t temp_storage_bytes = 0;
+				cub::DeviceReduce::Sum(d_temp_storage, temp_storage_bytes, g_sum, d_out, Vertex);
+				// Allocate temporary storage
+				cudaMalloc(&d_temp_storage, temp_storage_bytes);
+				// Run sum-reduction
+				cub::DeviceReduce::Sum(d_temp_storage, temp_storage_bytes, g_sum, d_out, Vertex);
+				// d_out <-- [38]
+				cudaEventRecord(stop_sum);
+				cudaDeviceSynchronize();
+				cudaMemcpy(out,d_out,sizeof(unsigned long long int)*1,cudaMemcpyDeviceToHost);
+				unsigned long long int Triangle = out[0];
+				cudaEventSynchronize(stop_sum);
+				float milliseconds = 0;
+				cudaEventElapsedTime(&milliseconds, start3, stop3);
+				//printf("\nSearch : %.4f sec ",milliseconds/1000);
+				float milliseconds_sum = 0;
+				cudaEventElapsedTime(&milliseconds_sum, start_sum, stop_sum);
+				float total_time = (milliseconds/1000) + (milliseconds_sum/1000);
+				printf("\nSearch : %.6f sec Vertex : %d Edge : %d Triangle : %llu  Sum_result : %.6f Sec, total_time : %.6f Sec\n",milliseconds/1000, Vertex, col_idx_s, Triangle, milliseconds_sum/1000, total_time);
+				total_exe_time = total_exe_time + total_time;
+				cudaFree(g_sum);
+				cudaFree(d_out);
+				free(out);
+		}
+		printf("\nTotal avg of 3 RUNS : %.6f Sec\n",total_exe_time/3);
 		//********** FREE THE MEMORY BLOCKS *****************
 		free(col_index);
 		free(row_ptr);
 		//free(sum);
 		cudaFree(g_col_index);
 		cudaFree(g_row_ptr);
-		cudaFree(g_sum);
-		cudaFree(d_out);
-		free(out);
+		// cudaFree(g_sum);
+		// cudaFree(d_out);
+		// free(out);
 
 	}
 	//printf("\n");
