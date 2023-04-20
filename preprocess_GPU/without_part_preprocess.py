@@ -5,7 +5,6 @@ import pandas as pd
 import sys
 import dgl
 import csv
-import pymetis
 import time
 import torch as th
 from scipy.io import mmread
@@ -144,6 +143,17 @@ elif file_extension == '.tsv':
     v=file['Source']
     v=np.array(v)
     G = dgl.graph((v,u))
+elif file_extension == '.tsv_1':
+    columns = ['Source','Dest']
+    file = pd.read_csv(sys.argv[1],delimiter='\t',names=columns,low_memory=False,skiprows=1)
+    print("Converting tsv2dgl..")
+    print("This might a take while..")
+    u=file['Dest']
+    u=np.array(u)
+    print(file['Dest'])
+    v=file['Source']
+    v=np.array(v)
+    G = dgl.graph((v,u))
 elif file_extension == '.txt':
     columns = ['Source','Dest']
     file = pd.read_csv(sys.argv[1],delimiter='\t',names=columns,skiprows=4)
@@ -156,15 +166,6 @@ elif file_extension == '.txt':
     v=np.array(v)
     G = dgl.graph((v,u))
 elif file_extension == '.mmio':
-    print("Converting mmio2dgl..")
-    print("This might a take while..")
-    a_mtx = mmread(sys.argv[1])
-    coo = a_mtx.tocoo()
-    u = th.tensor(coo.row, dtype=th.int64)
-    v = th.tensor(coo.col, dtype=th.int64)
-    G = dgl.graph((u, v))
-    #G.add_edges(u, v)
-elif file_name == '.out':
     print("Converting mmio2dgl..")
     print("This might a take while..")
     a_mtx = mmread(sys.argv[1])
@@ -216,7 +217,11 @@ end = time.time()
 totalTime = totalTime + (end-start)
 print("Graph Construction Successfull!!!! \tTime Taken :",round((end-start),4), "Seconds")
 #-------------------------------------------Graph Construction is done ----------#
-
+# start = time.time()
+# G = dgl.reorder_graph(G, node_permute_algo='metis',edge_permute_algo='dst', permute_config={'k':5000})
+# end = time.time()
+# totalTime = totalTime + (end-start)
+# print("Reorder is Done !!!!!\t Time of Reorder is :",round((end-start),4), "Seconds")
 #-------------------------------------Graph CONSTRUCTION USING MtX----------------#
 file = open(out_filename1,'w')
 row_ptr_s = len(np.array(G.adj_sparse('csr')[0]))

@@ -158,15 +158,17 @@ elif file_extension == '.mmio':
     v = th.tensor(coo.col, dtype=th.int64)
     G = dgl.DGLGraph()
     G.add_edges(u, v)
-elif file_name == '.out':
-    print("Converting mmio2dgl..")
+elif file_extension == '.tsv_1':
+    columns = ['Source','Dest']
+    file = pd.read_csv(sys.argv[1],delimiter='\t',names=columns,low_memory=False,skiprows=1)
+    print("Converting tsv2dgl..")
     print("This might a take while..")
-    a_mtx = mmread(sys.argv[1])
-    coo = a_mtx.tocoo()
-    u = th.tensor(coo.row, dtype=th.int64)
-    v = th.tensor(coo.col, dtype=th.int64)
-    G = dgl.DGLGraph()
-    G.add_edges(u, v)
+    u=file['Dest']
+    u=np.array(u)
+    print(file['Dest'])
+    v=file['Source']
+    v=np.array(v)
+    G = dgl.graph((v,u))
 else:
     print(f"Unsupported file type: {file_extension}")
     exit("If file is TAB Saprated data then remove all comments in file and save it with extention .tsv \n NOTE: only .tsv (Graph Challange), .txt(snap.stanford), .mtx(suit_sparse), .mmio(all) files are supported")
@@ -181,7 +183,6 @@ mem_usage = (psutil.Process().memory_info().rss)/(1024 * 1024 * 1024)
 print(f"Current memory usage: { (mem_usage)} GB")
 
 #----------------------DGL PREPROCESS-----------------------------------#
-
 start = time.time()
 print("DGL GRAPH CONSTRUCTION DONE \n",G)
 #G = dgl.to_simple(G)

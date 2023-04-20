@@ -11,6 +11,7 @@ from scipy.io import mmread
 import random
 import os
 from tqdm import tqdm
+import psutil
 
 #-------------------------------------Graph CONSTRUCTION USING MtX----------------#
 
@@ -19,6 +20,15 @@ start = time.time()
 
 file_name, file_extension = os.path.splitext(sys.argv[1])
 print(file_extension)
+suffix_csr = "_output.csr"
+suffix_part = "_part.csr."
+file_name = file_name.split("/")
+file_name = file_name[len(file_name)-1]
+out_filename1 = str(file_name) + suffix_csr
+out_filename2 = str(file_name) + suffix_part + str(sys.argv[2])
+print(out_filename2)
+mem_usage = (psutil.Process().memory_info().rss)/(1024 * 1024 * 1024)
+print(f"Current memory usage: { (mem_usage)} bytes")
 
 if file_extension == '.mtx':
     print("Converting mtx2dgl..")
@@ -60,15 +70,17 @@ elif file_extension == '.mmio':
     v = th.tensor(coo.col, dtype=th.int64)
     G = dgl.DGLGraph()
     G.add_edges(u, v)
-elif file_name == '.out':
-    print("Converting mmio2dgl..")
+elif file_extension == '.tsv_1':
+    columns = ['Source','Dest']
+    file = pd.read_csv(sys.argv[1],delimiter='\t',names=columns,low_memory=False,skiprows=1)
+    print("Converting tsv2dgl..")
     print("This might a take while..")
-    a_mtx = mmread(sys.argv[1])
-    coo = a_mtx.tocoo()
-    u = th.tensor(coo.row, dtype=th.int64)
-    v = th.tensor(coo.col, dtype=th.int64)
-    G = dgl.DGLGraph()
-    G.add_edges(u, v)
+    u=file['Dest']
+    u=np.array(u)
+    print(file['Dest'])
+    v=file['Source']
+    v=np.array(v)
+    G = dgl.graph((v,u))
 else:
     print(f"Unsupported file type: {file_extension}")
     exit("If file is TAB Saprated data then remove all comments in file and save it with extention .tsv \n NOTE: only .tsv (Graph Challange), .txt(snap.stanford), .mtx(suit_sparse), .mmio(all) files are supported")
@@ -90,8 +102,13 @@ G.remove_nodes(isolated_nodes)
 print(G)
 
 in_deg = np.array(G.in_degrees())
+in_deg_s = len(in_deg)
 print(in_deg)
-
+mem_usage = (psutil.Process().memory_info().rss)/(1024 * 1024 * 1024)
+print(f"Current memory usage: { (mem_usage)} GB")
+Nodes = G.num_nodes()
+Edges = G.num_edges()
+end = time.time()
 end = time.time()
 totalTime = totalTime + (end-start)
 print("Graph Construction Successfull!!!! \tTime Taken :",round((end-start),4), "Seconds")
@@ -99,7 +116,7 @@ print("Graph Construction Successfull!!!! \tTime Taken :",round((end-start),4), 
 
 #-------------------------------------DGL METIS GRAPH PARTITIONING------------------------#
 #nopart = 2
-nopart = int(sys.argv[3])
+nopart = int(sys.argv[2])
 print("Start Partitioning.....")
 start = time.time()
 #n_cuts, node_parts = pymetis.part_graph(nopart, adjacency=adjacency_list)
@@ -110,7 +127,8 @@ node_parts = dgl.metis_partition_assignment(G,nopart)
 end = time.time()
 totalTime = totalTime + (end-start)
 print("Partition is Done !!!!!\t Time of Partition is :",round((end-start),4), "Seconds")
-
+mem_usage = (psutil.Process().memory_info().rss)/(1024 * 1024 * 1024)
+print(f"Current memory usage: { (mem_usage)} bytes")
 #nodes_part = np.argwhere(np.array(membership) == i).ravel()
 print("Partitions Contructions with halo nodes ..")
 start = time.time()
@@ -118,7 +136,9 @@ parts, orig_nids, orig_eids=dgl.partition_graph_with_halo(G, node_parts, 1, resh
 end = time.time()
 totalTime = totalTime + (end-start)
 print("Halo Node CONSTRUCTION is Done !!!!!\t Time of construction is :",round((end-start),4), "Seconds")
-file = open(sys.argv[2],'w')
+file = open(out_filename2,'w')
+file.write("%i " % Nodes)
+file.write("%i\n" % Edges)
 for i in range(nopart):
     #g0, nfeats, efeats, partition_book, graph_name, ntypes, etypes  = dgl.distributed.load_partition('MetisPart/part.json', i)
     print("Reading Partiton %i is done !!!!! \n start coverting CSR...." %i)
@@ -184,7 +204,8 @@ for i in range(nopart):
     print(len(col_idx))
     print(len(row_ptr_dir))
     print(len(col_idx_dir))
-
+    mem_usage = (psutil.Process().memory_info().rss)/(1024 * 1024 * 1024)
+    print(f"Current memory usage: { (mem_usage)} GB")
 
     #--------------------writting CSR to file---------------------------------------#
 
@@ -211,6 +232,8 @@ for i in range(nopart):
     end = time.time()
     print("Writing is done !!!!! Time taken: ",round((end-start),4),"Seconds")
     totalTime = totalTime + (end-start)
+    mem_usage = (psutil.Process().memory_info().rss)/(1024 * 1024 * 1024)
+    print(f"Current memory usage: { (mem_usage)} GB")
     #print(np.array(SG.nodes()))
     #print(np.array(SG.ndata[dgl.NID]))
     #print(np.array(g0.ndata['inner_node']))

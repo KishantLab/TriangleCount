@@ -249,7 +249,7 @@ int main(int argc, char *argv[])
 			cudaFree(g_sum);
 
 		}
-		printf("\n Total AVG of 3 Runs : %.6f Sec\n",total_exe_time);
+		printf("\n Total AVG of 3 Runs : %.6f Sec\n",total_exe_time/3);
 		//********** FREE THE MEMORY BLOCKS *****************
 		free(col_index);
 		free(row_ptr);
