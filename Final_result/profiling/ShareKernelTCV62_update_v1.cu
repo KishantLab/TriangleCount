@@ -5,8 +5,8 @@
 #include<time.h>
 #include <cub/cub.cuh>
 
-#define N_THREADS_PER_BLOCK 64
-#define SHARED_MEM 64
+#define N_THREADS_PER_BLOCK 256
+#define SHARED_MEM 256
 
 //-------------------intersection function ----------------------------------
 __device__ __forceinline__ int Search (int skey , int *neb, int sizelist)
