@@ -1,0 +1,51 @@
+==PROF== Connected to process 21663 (/data/TriangleCount/Final_result/profiling/sm_occu_smem_128)
+==PROF== Profiling "Find_Triangle": 0%....50%....100% - 9 passes
+
+Search : 7.947747 sec Vertex : 13593032 Edge : 334591525 Triangle : 13540543134  Sum_result : 0.000304 Sec, total_time : 7.948051 Sec
+==PROF== Disconnected from process 21663
+[21663] sm_occu_smem_128@127.0.0.1
+  Find_Triangle(int *, int *, int, int, unsigned long long *), 2023-Apr-26 14:14:40, Context 1, Stream 7
+    Section: GPU Speed Of Light Throughput
+    ---------------------------------------------------------------------- --------------- ------------------------------
+    DRAM Frequency                                                           cycle/nsecond                           7.59
+    SM Frequency                                                             cycle/nsecond                           1.41
+    Elapsed Cycles                                                                   cycle                 1,19,18,95,477
+    Memory [%]                                                                           %                          37.58
+    DRAM Throughput                                                                      %                          16.08
+    Duration                                                                       msecond                         845.70
+    L1/TEX Cache Throughput                                                              %                          38.31
+    L2 Cache Throughput                                                                  %                          18.19
+    SM Active Cycles                                                                 cycle              1,16,92,30,280.50
+    Compute (SM) [%]                                                                     %                          65.47
+    ---------------------------------------------------------------------- --------------- ------------------------------
+    WRN   Compute is more heavily utilized than Memory: Look at the Compute Workload Analysis section to see what the   
+          compute pipelines are spending their time doing. Also, consider whether any computation is redundant and      
+          could be reduced or moved to look-up tables.                                                                  
+
+    Section: Launch Statistics
+    ---------------------------------------------------------------------- --------------- ------------------------------
+    Block Size                                                                                                        128
+    Function Cache Configuration                                                                  cudaFuncCachePreferNone
+    Grid Size                                                                                                 1,35,93,032
+    Registers Per Thread                                                   register/thread                             40
+    Shared Memory Configuration Size                                                 Kbyte                          32.77
+    Driver Shared Memory Per Block                                             Kbyte/block                           1.02
+    Dynamic Shared Memory Per Block                                             byte/block                              0
+    Static Shared Memory Per Block                                             Kbyte/block                           1.54
+    Threads                                                                         thread                 1,73,99,08,096
+    Waves Per SM                                                                                                13,485.15
+    ---------------------------------------------------------------------- --------------- ------------------------------
+
+    Section: Occupancy
+    ---------------------------------------------------------------------- --------------- ------------------------------
+    Block Limit SM                                                                   block                             16
+    Block Limit Registers                                                            block                             12
+    Block Limit Shared Mem                                                           block                             12
+    Block Limit Warps                                                                block                             12
+    Theoretical Active Warps per SM                                                   warp                             48
+    Theoretical Occupancy                                                                %                            100
+    Achieved Occupancy                                                                   %                          99.00
+    Achieved Active Warps Per SM                                                      warp                          47.52
+    ---------------------------------------------------------------------- --------------- ------------------------------
+    INF   This kernel's theoretical occupancy is not impacted by any block limit.                                       
+

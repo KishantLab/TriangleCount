@@ -1,0 +1,4 @@
+ncu --kernel-name Find_Triangle ./sm_occu_smem_128 /data/TriangleCount/Med_dataset/wikipedia/wikipedia_link_en_output.csr  > occup_128.txt
+ncu --metrics sm__sass_sectors_mem_global ./sm_occu_smem_256 ../../Med_dataset/amazon0601/amazon0601_adj_output.csr
+ncu --metrics l1tex__t_bytes_pipe_lsu_mem_global_op_atom ./with_Atomic ../../Med_dataset/cit-Patents/cit-Patents_adj_output.csr
+ncu --metrics l1tex__t_sectors_pipe_lsu_mem_global_op_atom ./with_Atomic ../../Med_dataset/cit-Patents/cit-Patents_adj_output.csr

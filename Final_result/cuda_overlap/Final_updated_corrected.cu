@@ -241,77 +241,176 @@ int main(int argc, char *argv[])
 		unsigned long long int Vertex=0, Edges=0;
 		fscanf(file, "%llu", &Vertex);
 		fscanf(file, "%llu", &Edges);
-		for (unsigned long long int i=0; i<no_partitions; i++)
+		//for (unsigned long long int i=0; i<no_partitions; i++)
 			//	for (unsigned long long int i = 0; i < 1; i++)
-		{
-			unsigned long long int data=0;
-			unsigned long long int rp_pos=0, ci_pos=0, t_ver=0,v_pos=0;
-			unsigned long long int Triangle =0;
-			fscanf(file, "%llu", &v_pos);
-			//fscanf(file, "%llu", &t_ver);
-			fscanf(file, "%llu", &rp_pos);
-			fscanf(file, "%llu", &ci_pos);
-			fscanf(file, "%llu", &t_ver);
-			//printf("v_pos : %llu, ci_pos: %llu,rp_pos :%llu, t_ver: %llu",v_pos,ci_pos,rp_pos,t_ver);
-			unsigned long long int *new_col_index;
-			//cudaMallocHost(&new_col_index,sizeof(unsigned long long int)*NUM_EDGES);
-			new_col_index = (unsigned long long int *)malloc(sizeof(unsigned long long int)*ci_pos);
-			unsigned long long int *new_row_ptr;
-			//cudaMallocHost(&new_row_ptr,sizeof(int)*NUM_VERTICES);
-			new_row_ptr = (unsigned long long int *)malloc(sizeof(unsigned long long int)*rp_pos);
-			//unsigned long long int *vertex_arr;
-			//cudaMallocHost(&vertex_arr,sizeof(int)*NUM_VERTICES);
-			//vertex_arr = (unsigned long long int *)malloc(sizeof(unsigned long long int)*v_pos);
+		//{
+		//unsigned long long int rp_pos=0, ci_pos=0, t_ver=0,v_pos=0;
+		//unsigned long long int Triangle =0;
+			unsigned long long int data=0, N=4;
+			unsigned long long int *rp_pos;
+			rp_pos = (unsigned long long int *)malloc(sizeof(unsigned long long int)*N);
+			unsigned long long int *ci_pos;
+			ci_pos = (unsigned long long int *)malloc(sizeof(unsigned long long int)*N);
+			unsigned long long int *t_ver;
+			t_ver = (unsigned long long int *)malloc(sizeof(unsigned long long int)*N);
+			unsigned long long int *v_pos;
+			v_pos = (unsigned long long int *)malloc(sizeof(unsigned long long int)*N);
 
-			//for (unsigned long long int j=0; j<v_pos; j++)
-			//{
-			//fscanf(file, "%llu", &data);
-			//vertex_arr[j]=data;
-			//}
-			//printf("Row_ptr :");
-			for (unsigned long long int j=0; j<rp_pos; j++)
+			fscanf(file, "%llu", &v_pos[0]);
+			fscanf(file, "%llu", &rp_pos[0]);
+			fscanf(file, "%llu", &ci_pos[0]);
+			fscanf(file, "%llu", &t_ver[0]);
+			//printf("v_pos : %llu, ci_pos: %llu,rp_pos :%llu, t_ver: %llu",v_pos,ci_pos,rp_pos,t_ver);
+			unsigned long long int *new_col_index_0;
+			new_col_index_0 = (unsigned long long int *)malloc(sizeof(unsigned long long int)*ci_pos[0]);
+			unsigned long long int *new_row_ptr_0;
+			new_row_ptr_0 = (unsigned long long int *)malloc(sizeof(unsigned long long int)*rp_pos[0]);
+			for (unsigned long long int j=0; j<rp_pos[0]; j++)
 			{
 				fscanf(file, "%llu", &data);
-				new_row_ptr[j]=data;
-				//prunsigned long long intf(" %d",data);
+				new_row_ptr_0[j]=data;
 			}
-			for (unsigned long long int j=0; j<ci_pos; j++)
+			for (unsigned long long int j=0; j<ci_pos[0]; j++)
 			{
 				fscanf(file, "%llu", &data);
-				new_col_index[j]=data;
+				new_col_index_0[j]=data;
 			}
+
+			fscanf(file, "%llu", &v_pos[1]);
+			fscanf(file, "%llu", &rp_pos[1]);
+			fscanf(file, "%llu", &ci_pos[1]);
+			fscanf(file, "%llu", &t_ver[1]);
+			//printf("v_pos : %llu, ci_pos: %llu,rp_pos :%llu, t_ver: %llu",v_pos,ci_pos,rp_pos,t_ver);
+			unsigned long long int *new_col_index_1;
+			new_col_index_1 = (unsigned long long int *)malloc(sizeof(unsigned long long int)*ci_pos[1]);
+			unsigned long long int *new_row_ptr_1;
+			new_row_ptr_1 = (unsigned long long int *)malloc(sizeof(unsigned long long int)*rp_pos[1]);
+			for (unsigned long long int j=0; j<rp_pos[1]; j++)
+			{
+				fscanf(file, "%llu", &data);
+				new_row_ptr_1[j]=data;
+			}
+			for (unsigned long long int j=0; j<ci_pos[1]; j++)
+			{
+				fscanf(file, "%llu", &data);
+				new_col_index_1[j]=data;
+			}
+
+			fscanf(file, "%llu", &v_pos[2]);
+			fscanf(file, "%llu", &rp_pos[2]);
+			fscanf(file, "%llu", &ci_pos[2]);
+			fscanf(file, "%llu", &t_ver[2]);
+			//printf("v_pos : %llu, ci_pos: %llu,rp_pos :%llu, t_ver: %llu",v_pos,ci_pos,rp_pos,t_ver);
+			unsigned long long int *new_col_index_2;
+			new_col_index_2 = (unsigned long long int *)malloc(sizeof(unsigned long long int)*ci_pos[2]);
+			unsigned long long int *new_row_ptr_2;
+			new_row_ptr_2 = (unsigned long long int *)malloc(sizeof(unsigned long long int)*rp_pos[2]);
+			for (unsigned long long int j=0; j<rp_pos[2]; j++)
+			{
+				fscanf(file, "%llu", &data);
+				new_row_ptr_2[j]=data;
+			}
+			for (unsigned long long int j=0; j<ci_pos[2]; j++)
+			{
+				fscanf(file, "%llu", &data);
+				new_col_index_2[j]=data;
+			}
+
+			fscanf(file, "%llu", &v_pos[3]);
+			fscanf(file, "%llu", &rp_pos[3]);
+			fscanf(file, "%llu", &ci_pos[3]);
+			fscanf(file, "%llu", &t_ver[3]);
+			//printf("v_pos : %llu, ci_pos: %llu,rp_pos :%llu, t_ver: %llu",v_pos,ci_pos,rp_pos,t_ver);
+			unsigned long long int *new_col_index_3;
+			new_col_index_3 = (unsigned long long int *)malloc(sizeof(unsigned long long int)*ci_pos[3]);
+			unsigned long long int *new_row_ptr_3;
+			new_row_ptr_3 = (unsigned long long int *)malloc(sizeof(unsigned long long int)*rp_pos[3]);
+			for (unsigned long long int j=0; j<rp_pos[3]; j++)
+			{
+				fscanf(file, "%llu", &data);
+				new_row_ptr_3[j]=data;
+			}
+			for (unsigned long long int j=0; j<ci_pos[3]; j++)
+			{
+				fscanf(file, "%llu", &data);
+				new_col_index_3[j]=data;
+			}
+
 			printf("\nPart %llu executing :",i);
 			//--------------------Launch the kernel-------------------//
 
 			//unsigned long long int *d_vertex_arr;  //GPU MEMORY ALOOCATION
 			//checkCuda(cudaMalloc(&d_vertex_arr,sizeof(unsigned long long int)*v_pos));
-
-			unsigned long long int *d_row_ptr;   // GPU MEMORY ALLOCATION
-			checkCuda(cudaMalloc(&d_row_ptr,sizeof(unsigned long long int)*rp_pos));
-
-			unsigned long long int *d_col_index;  //GPU MEMORY ALOOCATION
-			checkCuda(cudaMalloc(&d_col_index,sizeof(unsigned long long int)*ci_pos));
-			cudaMemset(d_row_ptr, 0, rp_pos * sizeof(unsigned long long int));
-			cudaMemset(d_col_index, 0, ci_pos * sizeof(unsigned long long int));
 			//int *s_col_index;  //GPU MEMORY ALOOCATION
 			//cudaMalloc(&s_col_index,sizeof(int)*NUM_EDGES);
 
 			//cudaDeviceSynchronize();
 
-			unsigned long long int *out;
-			out=(unsigned long long int *)malloc(sizeof(unsigned long long int)*1);
+			unsigned long long int *d_row_ptr_0;   // GPU MEMORY ALLOCATION
+			checkCuda(cudaMalloc(&d_row_ptr_0,sizeof(unsigned long long int)*rp_pos[0]));
+			unsigned long long int *d_col_index_0;  //GPU MEMORY ALOOCATION
+			checkCuda(cudaMalloc(&d_col_index_0,sizeof(unsigned long long int)*ci_pos[0]));
+			cudaMemset(d_row_ptr_0, 0, rp_pos[0] * sizeof(unsigned long long int));
+			cudaMemset(d_col_index_0, 0, ci_pos[0] * sizeof(unsigned long long int));
+			unsigned long long int *out_0;
+			out_0=(unsigned long long int *)malloc(sizeof(unsigned long long int)*1);
+			unsigned long long int *d_sum_0;
+			checkCuda(cudaMalloc(&d_sum_0,sizeof(unsigned long long int)*t_ver[0]));
+			cudaMemset(d_sum_0, 0, t_ver[0] * sizeof(unsigned long long int));
+			unsigned long long int *d_out_0;
+			cudaMalloc((void**)&d_out_0,sizeof(unsigned long long int)*1);
+			cudaMemset(d_out_0, 0, 1 * sizeof(unsigned long long int));
 
-			unsigned long long int *d_sum;
-			checkCuda(cudaMalloc(&d_sum,sizeof(unsigned long long int)*t_ver));
-			cudaMemset(d_sum, 0, t_ver * sizeof(unsigned long long int));
-			unsigned long long int *d_out;
-			cudaMalloc((void**)&d_out,sizeof(unsigned long long int)*1);
-			cudaMemset(d_out, 0, 1 * sizeof(unsigned long long int));
-			//float total_kernel_time = 0.0 ;
+			unsigned long long int *d_row_ptr_1;   // GPU MEMORY ALLOCATION
+			checkCuda(cudaMalloc(&d_row_ptr_1,sizeof(unsigned long long int)*rp_pos[1]));
+			unsigned long long int *d_col_index_1;  //GPU MEMORY ALOOCATION
+			checkCuda(cudaMalloc(&d_col_index_1,sizeof(unsigned long long int)*ci_pos[1]));
+			cudaMemset(d_row_ptr_1, 0, rp_pos[1] * sizeof(unsigned long long int));
+			cudaMemset(d_col_index_1, 0, ci_pos[1] * sizeof(unsigned long long int));
+			unsigned long long int *out_1;
+			out_1=(unsigned long long int *)malloc(sizeof(unsigned long long int)*1);
+			unsigned long long int *d_sum_1;
+			checkCuda(cudaMalloc(&d_sum_1,sizeof(unsigned long long int)*t_ver[1]));
+			cudaMemset(d_sum_1, 0, t_ver[1] * sizeof(unsigned long long int));
+			unsigned long long int *d_out_1;
+			cudaMalloc((void**)&d_out_1,sizeof(unsigned long long int)*1);
+			cudaMemset(d_out_1, 0, 1 * sizeof(unsigned long long int));
 
-			//int nblocks = ceil((float)total_v_in_partitions / BLOCKSIZE);
+			unsigned long long int *d_row_ptr_2;   // GPU MEMORY ALLOCATION
+			checkCuda(cudaMalloc(&d_row_ptr_2,sizeof(unsigned long long int)*rp_pos[2]));
+			unsigned long long int *d_col_index_2;  //GPU MEMORY ALOOCATION
+			checkCuda(cudaMalloc(&d_col_index_2,sizeof(unsigned long long int)*ci_pos[2]));
+			cudaMemset(d_row_ptr_2, 0, rp_pos[2] * sizeof(unsigned long long int));
+			cudaMemset(d_col_index_2, 0, ci_pos[2] * sizeof(unsigned long long int));
+			unsigned long long int *out_2;
+			out_2=(unsigned long long int *)malloc(sizeof(unsigned long long int)*1);
+			unsigned long long int *d_sum_2;
+			checkCuda(cudaMalloc(&d_sum_2,sizeof(unsigned long long int)*t_ver[2]));
+			cudaMemset(d_sum_2, 0, t_ver[2] * sizeof(unsigned long long int));
+			unsigned long long int *d_out_2;
+			cudaMalloc((void**)&d_out_2,sizeof(unsigned long long int)*1);
+			cudaMemset(d_out_2, 0, 1 * sizeof(unsigned long long int));
 
-			//start = clock();
+			unsigned long long int *d_row_ptr_3;   // GPU MEMORY ALLOCATION
+			checkCuda(cudaMalloc(&d_row_ptr_3,sizeof(unsigned long long int)*rp_pos[3]));
+			unsigned long long int *d_col_index_3;  //GPU MEMORY ALOOCATION
+			checkCuda(cudaMalloc(&d_col_index_3,sizeof(unsigned long long int)*ci_pos[3]));
+			cudaMemset(d_row_ptr_3, 0, rp_pos[3] * sizeof(unsigned long long int));
+			cudaMemset(d_col_index_3, 0, ci_pos[3] * sizeof(unsigned long long int));
+			unsigned long long int *out_3;
+			out_3=(unsigned long long int *)malloc(sizeof(unsigned long long int)*1);
+			unsigned long long int *d_sum_3;
+			checkCuda(cudaMalloc(&d_sum_3,sizeof(unsigned long long int)*t_ver[3]));
+			cudaMemset(d_sum_3, 0, t_ver[3] * sizeof(unsigned long long int));
+			unsigned long long int *d_out_3;
+			cudaMalloc((void**)&d_out_3,sizeof(unsigned long long int)*1);
+			cudaMemset(d_out_3, 0, 1 * sizeof(unsigned long long int));
+
+
+			cudaStream_t stream[N];
+			for (int i = 0; i < N; ++i)
+    	checkCuda( cudaStreamCreate(&stream[i]) );
+
 			cudaEvent_t start, stop;
 			checkCuda( cudaEventCreate(&start));
 			checkCuda( cudaEventCreate(&stop));
@@ -320,64 +419,80 @@ int main(int argc, char *argv[])
 			cudaEvent_t start_sum,stop_sum;
 			cudaEventCreate(&start_sum);
 			cudaEventCreate(&stop_sum);
+
+			//checkCuda( cudaEventRecord(startEvent,0) );
 			//--------copy data from host to device --------------//
-			checkCuda(cudaMemcpy(d_col_index,new_col_index,sizeof(unsigned long long int)*ci_pos,cudaMemcpyHostToDevice));
-			checkCuda(cudaMemcpy(d_row_ptr,new_row_ptr,sizeof(unsigned long long int)*rp_pos,cudaMemcpyHostToDevice));
 			//checkCuda(cudaMemcpy(d_vertex_arr,vertex_arr,sizeof(unsigned long long int)*v_pos,cudaMemcpyHostToDevice));
 
-			//Sorting The data
+			checkCuda(cudaMemcpyAsync(d_col_index_0,new_col_index_0,sizeof(unsigned long long int)*ci_pos[0],cudaMemcpyHostToDevice,stream[0])));
+			checkCuda(cudaMemcpyAsync(d_row_ptr_0,new_row_ptr_0,sizeof(unsigned long long int)*rp_pos[0],cudaMemcpyHostToDevice,stream[0])));
 
-			//int  num_items=ci_pos;          // e.g., 7
-			//int  num_segments=rp_pos;       // e.g., 3
-			//int  *d_offsets; d_row_ptr         // e.g., [0, 3, 3, 7]
-			//int  *d_keys_in; s_col_index        // e.g., [8, 6, 7, 5, 3, 0, 9]
-			//int  *d_keys_out; d_col_index       // e.g., [-, -, -, -, -, -, -]
-			// unsigned long long int  *d_values_in;       // e.g., [0, 1, 2, 3, 4, 5, 6]
-			// checkCuda(cudaMalloc(&d_values_in,sizeof(unsigned long long int)*ci_pos));
-			// cudaMemset(d_values_in, 0, ci_pos * sizeof(unsigned long long int));
-			//
-			// unsigned long long int  *d_values_out;      // e.g., [-, -, -, -, -, -, -]
-			// checkCuda(cudaMalloc(&d_values_out,sizeof(unsigned long long int)*ci_pos));
-			// cudaMemset(d_values_out, 0, ci_pos * sizeof(unsigned long long int));
-			//
-			//
-			// // Determine temporary device storage requirements
-			// size_t temp_storage_bytes=0;
-			// void *d_temp_storage=NULL;
-			// cub::DeviceSegmentedRadixSort::SortPairs(d_temp_storage, temp_storage_bytes,
-			// 		d_col_index, d_col_index, d_values_in, d_values_out,
-			// 		ci_pos, rp_pos-1, d_row_ptr, d_row_ptr+1);
-			// // Allocate temporary storage
-			// checkCuda(cudaMalloc(&d_temp_storage, temp_storage_bytes));
-			// // Run sorting operation
-			// cub::DeviceSegmentedRadixSort::SortPairs(d_temp_storage, temp_storage_bytes,
-			// 		d_col_index, d_col_index, d_values_in, d_values_out,
-			// 		ci_pos, rp_pos-1, d_row_ptr, d_row_ptr+1);
-			// checkCuda(cudaDeviceSynchronize());
+			checkCuda(cudaMemcpyAsync(d_col_index_1,new_col_index_1,sizeof(unsigned long long int)*ci_pos[1],cudaMemcpyHostToDevice,stream[1])));
+			checkCuda(cudaMemcpyAsync(d_row_ptr_1,new_row_ptr_1,sizeof(unsigned long long int)*rp_pos[1],cudaMemcpyHostToDevice,stream[1])));
 
-			// Declare, allocate, and initialize device-accessible pointers for sorting data
-			// int  num_items;          // e.g., 7
-			// int  num_segments;       // e.g., 3
-			// int  *d_offsets;         // e.g., [0, 3, 3, 7]
-			// int  *d_keys_in;         // e.g., [8, 6, 7, 5, 3, 0, 9]
-			// int  *d_keys_out;        // e.g., [-, -, -, -, -, -, -]
-			// ...
+			checkCuda(cudaMemcpyAsync(d_col_index_2,new_col_index_2,sizeof(unsigned long long int)*ci_pos[2],cudaMemcpyHostToDevice,stream[2])));
+			checkCuda(cudaMemcpyAsync(d_row_ptr_2,new_row_ptr_2,sizeof(unsigned long long int)*rp_pos[2],cudaMemcpyHostToDevice,stream[2])));
+
+			checkCuda(cudaMemcpyAsync(d_col_index_3,new_col_index_3,sizeof(unsigned long long int)*ci_pos[3],cudaMemcpyHostToDevice,stream[3])));
+			checkCuda(cudaMemcpyAsync(d_row_ptr_3,new_row_ptr_3,sizeof(unsigned long long int)*rp_pos[3],cudaMemcpyHostToDevice,stream[3])));
+
+			//--------------------------------------------SHorting of new_col_index-----------------------------------//
 			// Determine temporary device storage requirements
-			unsigned long long int  *d_values_out;      // e.g., [-, -, -, -, -, -, -]
-			checkCuda(cudaMalloc(&d_values_out,sizeof(unsigned long long int)*ci_pos));
-			cudaMemset(d_values_out, 0, ci_pos * sizeof(unsigned long long int));
+			unsigned long long int  *d_values_out_0;      // e.g., [-, -, -, -, -, -, -]
+			checkCuda(cudaMalloc(&d_values_out_0,sizeof(unsigned long long int)*ci_pos[0]));
+			cudaMemset(d_values_out_0, 0, ci_pos[0] * sizeof(unsigned long long int));
 
-			void     *d_temp_storage = NULL;
-			size_t   temp_storage_bytes = 0;
-			cub::DeviceSegmentedRadixSort::SortKeys(d_temp_storage, temp_storage_bytes, d_col_index, d_values_out,
-			    ci_pos, rp_pos-1, d_row_ptr, d_row_ptr + 1);
+			void     *d_temp_storage_0 = NULL;
+			size_t   temp_storage_bytes_0 = 0;
+			cub::DeviceSegmentedRadixSort::SortKeys(d_temp_storage_0, temp_storage_bytes_0, d_col_index_0, d_values_out_0, ci_pos[0], rp_pos[0]-1, d_row_ptr_0, d_row_ptr_0 + 1);
 			// Allocate temporary storage
-			cudaMalloc(&d_temp_storage, temp_storage_bytes);
+			cudaMalloc(&d_temp_storage_0, temp_storage_bytes_0);
 			// Run sorting operation
-			cub::DeviceSegmentedRadixSort::SortKeys(d_temp_storage, temp_storage_bytes, d_col_index, d_values_out,
-			    ci_pos, rp_pos-1, d_row_ptr, d_row_ptr + 1);
+			cub::DeviceSegmentedRadixSort::SortKeys(d_temp_storage_0, temp_storage_bytes_0, d_col_index_0, d_values_out_0,  ci_pos[0], rp_pos[0]-1, d_row_ptr_0, d_row_ptr_0 + 1);
 			// d_keys_out            <-- [6, 7, 8, 0, 3, 5, 9]
-			checkCuda(cudaFree(d_col_index));
+			checkCuda(cudaFree(d_col_index_0));
+
+			unsigned long long int  *d_values_out_1;      // e.g., [-, -, -, -, -, -, -]
+			checkCuda(cudaMalloc(&d_values_out_1,sizeof(unsigned long long int)*ci_pos[1]));
+			cudaMemset(d_values_out_1, 0, ci_pos[1] * sizeof(unsigned long long int));
+
+			void     *d_temp_storage_1 = NULL;
+			size_t   temp_storage_bytes_1 = 0;
+			cub::DeviceSegmentedRadixSort::SortKeys(d_temp_storage_1, temp_storage_bytes_1, d_col_index_1, d_values_out_1, ci_pos[1], rp_pos[1]-1, d_row_ptr_1, d_row_ptr_1 + 1);
+			// Allocate temporary storage
+			cudaMalloc(&d_temp_storage_1, temp_storage_bytes_1);
+			// Run sorting operation
+			cub::DeviceSegmentedRadixSort::SortKeys(d_temp_storage_1, temp_storage_bytes_1, d_col_index_1, d_values_out_1,  ci_pos[1], rp_pos[1]-1, d_row_ptr_1, d_row_ptr_1 + 1);
+			// d_keys_out            <-- [6, 7, 8, 0, 3, 5, 9]
+			checkCuda(cudaFree(d_col_index_1));
+
+			unsigned long long int  *d_values_out_2;      // e.g., [-, -, -, -, -, -, -]
+			checkCuda(cudaMalloc(&d_values_out_2,sizeof(unsigned long long int)*ci_pos[2]));
+			cudaMemset(d_values_out_2, 0, ci_pos[2] * sizeof(unsigned long long int));
+
+			void     *d_temp_storage_2 = NULL;
+			size_t   temp_storage_bytes_2 = 0;
+			cub::DeviceSegmentedRadixSort::SortKeys(d_temp_storage_2, temp_storage_bytes_2, d_col_index_2, d_values_out_2, ci_pos[2], rp_pos[2]-1, d_row_ptr_2, d_row_ptr_2 + 1);
+			// Allocate temporary storage
+			cudaMalloc(&d_temp_storage_2, temp_storage_bytes_2);
+			// Run sorting operation
+			cub::DeviceSegmentedRadixSort::SortKeys(d_temp_storage_2, temp_storage_bytes_2, d_col_index_2, d_values_out_2,  ci_pos[2], rp_pos[2]-1, d_row_ptr_2, d_row_ptr_2 + 1);
+			// d_keys_out            <-- [6, 7, 8, 0, 3, 5, 9]
+			checkCuda(cudaFree(d_col_index_2));
+
+			unsigned long long int  *d_values_out_3;      // e.g., [-, -, -, -, -, -, -]
+			checkCuda(cudaMalloc(&d_values_out_3,sizeof(unsigned long long int)*ci_pos[3]));
+			cudaMemset(d_values_out_3, 0, ci_pos[3] * sizeof(unsigned long long int));
+
+			void     *d_temp_storage_3 = NULL;
+			size_t   temp_storage_bytes_3 = 0;
+			cub::DeviceSegmentedRadixSort::SortKeys(d_temp_storage_3, temp_storage_bytes_3, d_col_index_3, d_values_out_3, ci_pos[3], rp_pos[3]-1, d_row_ptr_3, d_row_ptr_3 + 1);
+			// Allocate temporary storage
+			cudaMalloc(&d_temp_storage_3, temp_storage_bytes_3);
+			// Run sorting operation
+			cub::DeviceSegmentedRadixSort::SortKeys(d_temp_storage_3, temp_storage_bytes_3, d_col_index_3, d_values_out_3,  ci_pos[3], rp_pos[3]-1, d_row_ptr_3, d_row_ptr_3 + 1);
+			// d_keys_out            <-- [6, 7, 8, 0, 3, 5, 9]
+			checkCuda(cudaFree(d_col_index_3));
 			//cudaMemcpy(new_col_index,d_col_index,sizeof(int)*ci_pos,cudaMemcpyDeviceToHost);
 			//cudaMemcpy(d_col_index,new_col_index,sizeof(int)*ci_pos,cudaMemcpyHostToDevice);
 			//---------------------------kernel callled------------------//
@@ -387,33 +502,69 @@ int main(int argc, char *argv[])
 			checkCuda(cudaEventCreate(&stopG));
 
 			cudaEventRecord(startG);
-			Find_Triangle<<<t_ver,N_THREADS_PER_BLOCK>>>(d_values_out,d_row_ptr,d_sum,ci_pos,rp_pos);
-			checkCuda(cudaDeviceSynchronize());
+			Find_Triangle<<<t_ver[0], N_THREADS_PER_BLOCK, 0, stream[0]>>>(d_values_out_0, d_row_ptr_0, d_sum_0, ci_pos[0], rp_pos[0]);
+			Find_Triangle<<<t_ver[1], N_THREADS_PER_BLOCK, 0, stream[1]>>>(d_values_out_1, d_row_ptr_1, d_sum_1, ci_pos[1], rp_pos[1]);
+			Find_Triangle<<<t_ver[2], N_THREADS_PER_BLOCK, 0, stream[2]>>>(d_values_out_2, d_row_ptr_2, d_sum_2, ci_pos[2], rp_pos[2]);
+			Find_Triangle<<<t_ver[3], N_THREADS_PER_BLOCK, 0, stream[3]>>>(d_values_out_3, d_row_ptr_3, d_sum_3, ci_pos[3], rp_pos[3]);
+			//checkCuda(cudaDeviceSynchronize());
+			checkCuda(cudaStreamSynchronize(stream[0]));
+			checkCuda(cudaStreamSynchronize(stream[1]));
+			checkCuda(cudaStreamSynchronize(stream[2]));
+			checkCuda(cudaStreamSynchronize(stream[3]));
 			checkCuda(cudaEventRecord(stopG));
 			checkCuda(cudaGetLastError());
 
-			//checkCuda(cudaMemcpy(sum,d_sum,sizeof(unsigned long long int)*1,cudaMemcpyDeviceToHost));
+				//checkCuda(cudaMemcpy(sum,d_sum,sizeof(unsigned long long int)*1,cudaMemcpyDeviceToHost));
 
 			//unsigned long long int Triangle=sum[0];
 			checkCuda(cudaEventRecord(stop));
 			checkCuda(cudaEventSynchronize(stop));
-
-			checkCuda(cudaFree(d_row_ptr));
 			//checkCuda(cudaFree(d_col_index));
 			//checkCuda(cudaFree(d_values_in));
-			checkCuda(cudaFree(d_values_out));
-			checkCuda(cudaFree(d_temp_storage));
+
+			checkCuda(cudaFree(d_row_ptr_0));
+			checkCuda(cudaFree(d_values_out_0));
+			checkCuda(cudaFree(d_temp_storage_0));
+
+			checkCuda(cudaFree(d_row_ptr_1));
+			checkCuda(cudaFree(d_values_out_1));
+			checkCuda(cudaFree(d_temp_storage_1));
+
+			checkCuda(cudaFree(d_row_ptr_2));
+			checkCuda(cudaFree(d_values_out_2));
+			checkCuda(cudaFree(d_temp_storage_2));
+
+			checkCuda(cudaFree(d_row_ptr_3));
+			checkCuda(cudaFree(d_values_out_3));
+			checkCuda(cudaFree(d_temp_storage_3));
+
 			checkCuda(cudaDeviceSynchronize());
 			cudaEventRecord(start_sum);
 			//---------------------perform CUMSUM----------------------//
 			void *d_temp_storage_1 = NULL;
 			size_t temp_storage_bytes_1 = 0;
 			cub::DeviceReduce::Sum(d_temp_storage_1, temp_storage_bytes_1, d_sum, d_out, t_ver);
-			// Allocate temporary storage
 			cudaMalloc(&d_temp_storage_1, temp_storage_bytes_1);
-			// Run sum-reduction
 			cub::DeviceReduce::Sum(d_temp_storage_1, temp_storage_bytes_1, d_sum, d_out, t_ver);
-			// d_out <-- [38]
+
+			void *d_temp_storage_1 = NULL;
+			size_t temp_storage_bytes_1 = 0;
+			cub::DeviceReduce::Sum(d_temp_storage_1, temp_storage_bytes_1, d_sum, d_out, t_ver);
+			cudaMalloc(&d_temp_storage_1, temp_storage_bytes_1);
+			cub::DeviceReduce::Sum(d_temp_storage_1, temp_storage_bytes_1, d_sum, d_out, t_ver);
+
+			void *d_temp_storage_1 = NULL;
+			size_t temp_storage_bytes_1 = 0;
+			cub::DeviceReduce::Sum(d_temp_storage_1, temp_storage_bytes_1, d_sum, d_out, t_ver);
+			cudaMalloc(&d_temp_storage_1, temp_storage_bytes_1);
+			cub::DeviceReduce::Sum(d_temp_storage_1, temp_storage_bytes_1, d_sum, d_out, t_ver);
+
+			void *d_temp_storage_1 = NULL;
+			size_t temp_storage_bytes_1 = 0;
+			cub::DeviceReduce::Sum(d_temp_storage_1, temp_storage_bytes_1, d_sum, d_out, t_ver);
+			cudaMalloc(&d_temp_storage_1, temp_storage_bytes_1);
+			cub::DeviceReduce::Sum(d_temp_storage_1, temp_storage_bytes_1, d_sum, d_out, t_ver);
+
 			cudaEventRecord(stop_sum);
 			checkCuda(cudaDeviceSynchronize());
 			checkCuda(cudaGetLastError());

@@ -1,0 +1,51 @@
+==PROF== Connected to process 22026 (/data/TriangleCount/Final_result/profiling/sm_occu_smem_256)
+==PROF== Profiling "Find_Triangle": 0%....50%....100% - 9 passes
+
+Search : 10.063409 sec Vertex : 13593032 Edge : 334591525 Triangle : 13540543134  Sum_result : 0.000320 Sec, total_time : 10.063729 Sec
+==PROF== Disconnected from process 22026
+[22026] sm_occu_smem_256@127.0.0.1
+  Find_Triangle(int *, int *, int, int, unsigned long long *), 2023-Apr-26 14:40:42, Context 1, Stream 7
+    Section: GPU Speed Of Light Throughput
+    ---------------------------------------------------------------------- --------------- ------------------------------
+    DRAM Frequency                                                           cycle/nsecond                           7.59
+    SM Frequency                                                             cycle/nsecond                           1.41
+    Elapsed Cycles                                                                   cycle                 1,51,91,32,453
+    Memory [%]                                                                           %                          34.32
+    DRAM Throughput                                                                      %                           8.46
+    Duration                                                                        second                           1.08
+    L1/TEX Cache Throughput                                                              %                          34.50
+    L2 Cache Throughput                                                                  %                           9.88
+    SM Active Cycles                                                                 cycle              1,51,12,60,355.62
+    Compute (SM) [%]                                                                     %                          54.01
+    ---------------------------------------------------------------------- --------------- ------------------------------
+    WRN   This kernel exhibits low compute throughput and memory bandwidth utilization relative to the peak performance 
+          of this device. Achieved compute throughput and/or memory bandwidth below 60.0% of peak typically indicate    
+          latency issues. Look at Scheduler Statistics and Warp State Statistics for potential reasons.                 
+
+    Section: Launch Statistics
+    ---------------------------------------------------------------------- --------------- ------------------------------
+    Block Size                                                                                                        256
+    Function Cache Configuration                                                                  cudaFuncCachePreferNone
+    Grid Size                                                                                                 1,35,93,032
+    Registers Per Thread                                                   register/thread                             40
+    Shared Memory Configuration Size                                                 Kbyte                          65.54
+    Driver Shared Memory Per Block                                             Kbyte/block                           1.02
+    Dynamic Shared Memory Per Block                                             byte/block                              0
+    Static Shared Memory Per Block                                             Kbyte/block                           3.08
+    Threads                                                                         thread                 3,47,98,16,192
+    Waves Per SM                                                                                                26,970.30
+    ---------------------------------------------------------------------- --------------- ------------------------------
+
+    Section: Occupancy
+    ---------------------------------------------------------------------- --------------- ------------------------------
+    Block Limit SM                                                                   block                             16
+    Block Limit Registers                                                            block                              6
+    Block Limit Shared Mem                                                           block                             15
+    Block Limit Warps                                                                block                              6
+    Theoretical Active Warps per SM                                                   warp                             48
+    Theoretical Occupancy                                                                %                            100
+    Achieved Occupancy                                                                   %                          98.43
+    Achieved Active Warps Per SM                                                      warp                          47.25
+    ---------------------------------------------------------------------- --------------- ------------------------------
+    INF   This kernel's theoretical occupancy is not impacted by any block limit.                                       
+
