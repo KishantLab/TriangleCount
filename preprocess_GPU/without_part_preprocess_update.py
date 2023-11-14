@@ -135,7 +135,7 @@ if file_extension == '.mtx':
     #G.add_edges(u, v)
 elif file_extension == '.tsv':
     columns = ['Source','Dest','Data']
-    file = pd.read_csv(sys.argv[1],delimiter='\t',names=columns,low_memory=False)
+    file = pd.read_csv(sys.argv[1],delimiter='\t',names=columns)
     print("Converting tsv2dgl..")
     print("This might a take while..")
     u=file['Dest']
