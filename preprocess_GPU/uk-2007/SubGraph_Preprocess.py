@@ -189,8 +189,8 @@ print("DGL GRAPH CONSTRUCTION DONE \n",G)
 G = dgl.remove_self_loop(G)
 print("DGL SIMPLE GRAPH CONSTRUCTION DONE \n",G)
 #G = dgl.add_reverse_edges(G)
-G = dgl.to_bidirected(G)
-print("DGL GRAPH CONSTRUCTION DONE \n",G)
+#G = dgl.to_bidirected(G)
+#print("DGL GRAPH CONSTRUCTION DONE \n",G)
 
 isolated_nodes = ((G.in_degrees() == 0) & (G.out_degrees() == 0)).nonzero().squeeze(1)
 G.remove_nodes(isolated_nodes)
@@ -258,8 +258,8 @@ for i in range(nopart):
     row_ptr = np.array(SG.adj_sparse('csr')[0])
     col_idx = np.array(SG.adj_sparse('csr')[1])
     # Sort the column indices within each row range specified by row_ptr
-    for x in range(len(row_ptr) - 1):
-        col_idx[row_ptr[x]:row_ptr[x + 1]] = np.sort(col_idx[row_ptr[x]:row_ptr[x + 1]])
+    # for x in range(len(row_ptr) - 1):
+    #     col_idx[row_ptr[x]:row_ptr[x + 1]] = np.sort(col_idx[row_ptr[x]:row_ptr[x + 1]])
     mem_usage = (psutil.Process().memory_info().rss)/(1024 * 1024 * 1024)
     print(f"Current memory usage: { (mem_usage)} GB")
     mem_required = 0

@@ -17,7 +17,7 @@ import psutil
 
 Find_size = cp.RawKernel(r'''
 extern "C" __global__
-void Find_size(unsigned long long int *d_in_deg, unsigned long long int *d_org_id, unsigned long long int *d_row_ptr, unsigned long long int *d_col_idx, unsigned long long int *temp_arr, unsigned long long int in_deg_s, unsigned long long int org_id_s, unsigned long long int row_ptr_s, unsigned long long int col_idx_s)
+void Find_size(unsigned long long int *d_in_deg, unsigned long long int *d_org_id, unsigned long long int *d_row_ptr, unsigned long long int *d_col_idx, unsigned long long int *temp_arr, unsigned long long int in_deg_s, unsigned long long int org_id_s, unsigned long long int row_ptr_s, unsigned long long int col_idx_s, unsigned long long int t_ver)
 {
     unsigned long long int id = threadIdx.x + blockIdx.x * blockDim.x ; //Define id with thread id
     if(id < row_ptr_s)
@@ -26,31 +26,60 @@ void Find_size(unsigned long long int *d_in_deg, unsigned long long int *d_org_i
       //unsigned long long int deg_src = row_ptr[i+1] - row_ptr[i];
       unsigned long long int deg_src = d_in_deg[d_org_id[id]];
       //printf(" Deg_src : %llu ",deg_src);
-      for(unsigned long long int j=d_row_ptr[id]; j<d_row_ptr[id+1]; j++)
+      if( id < t_ver)
       {
-        //unsigned long long int deg_dst = row_ptr[col_index[j]+1] - row_ptr[col_index[j]];
-        unsigned long long int deg_dst = d_in_deg[d_org_id[d_col_idx[j]]];
-        //printf("  Deg_dst : %llu ",deg_dst);
-        if(deg_src < deg_dst)
-        {
-          count++;
-          //col_idx_Dir[pos] = col_idx[j];
-          //pos++;
-        }
-        else if(deg_src == deg_dst)
-        {
-          if(d_org_id[d_col_idx[j]] < d_org_id[id])
+          for(unsigned long long int j=d_row_ptr[id]; j<d_row_ptr[id+1]; j++)
           {
-            count++;
-            //col_idx_Dir[pos] = col_idx[j];
-             //pos++;
+            //unsigned long long int deg_dst = row_ptr[col_index[j]+1] - row_ptr[col_index[j]];
+            unsigned long long int deg_dst = d_in_deg[d_org_id[d_col_idx[j]]];
+            //printf("  Deg_dst : %llu ",deg_dst);
+            if(deg_src < deg_dst)
+            {
+              count++;
+              //col_idx_Dir[pos] = col_idx[j];
+              //pos++;
+            }
+            else if(deg_src == deg_dst)
+            {
+              if(d_org_id[d_col_idx[j]] < d_org_id[id])
+              {
+                count++;
+                //col_idx_Dir[pos] = col_idx[j];
+                 //pos++;
+              }
+            }
+            //bar.update();
+            temp_arr[id] = count;
+            //printf("%llu",count);
+            //row_ptr_Dir[i+1] = pos;
           }
         }
-        //bar.update();
-        temp_arr[id] = count;
-        //printf("%llu",count);
-        //row_ptr_Dir[i+1] = pos;
-      }
+        if( id >= t_ver)
+        {
+            for(unsigned long long int j=d_row_ptr[id]; j<d_row_ptr[id+1]; j++)
+            {
+                unsigned long long int deg_dst = d_in_deg[d_org_id[d_col_idx[j]]];
+                if( deg_src < deg_dst)
+                {
+                    if( id >= t_ver && d_col_idx[j] <= t_ver)
+                    {
+                        count++;
+                    }
+                }
+                if(deg_src == deg_dst)
+                {
+                  if(d_org_id[d_col_idx[j]] < d_org_id[id])
+                  {
+                    count++;
+                    //d_col_idx_Dir[pos] = d_col_idx[j];
+                    //pos++;
+                  }
+                }
+                //bar.update();
+                temp_arr[id] = count;
+                //d_row_ptr_Dir[id+1] = pos;
+            }
+        }
     }
 }
 '''
@@ -58,7 +87,7 @@ void Find_size(unsigned long long int *d_in_deg, unsigned long long int *d_org_i
 
 Convert = cp.RawKernel(r'''
 extern "C" __global__
-void Convert(unsigned long long int *d_in_deg, unsigned long long int *d_org_id, unsigned long long int *d_row_ptr, unsigned long long int *d_col_idx, unsigned long long int *temp_arr_sum, unsigned long long int *d_row_ptr_Dir, unsigned long long int *d_col_idx_Dir, unsigned long long int in_deg_s, unsigned long long int org_id_s, unsigned long long int row_ptr_s, unsigned long long int col_idx_s)
+void Convert(unsigned long long int *d_in_deg, unsigned long long int *d_org_id, unsigned long long int *d_row_ptr, unsigned long long int *d_col_idx, unsigned long long int *temp_arr_sum, unsigned long long int *d_row_ptr_Dir, unsigned long long int *d_col_idx_Dir, unsigned long long int in_deg_s, unsigned long long int org_id_s, unsigned long long int row_ptr_s, unsigned long long int col_idx_s, unsigned long long int t_ver)
 {
     unsigned long long int id = threadIdx.x + blockIdx.x * blockDim.x ; //Define id with thread id
     unsigned long long int pos;
@@ -76,28 +105,58 @@ void Convert(unsigned long long int *d_in_deg, unsigned long long int *d_org_id,
         }
         unsigned long long int deg_src = d_in_deg[d_org_id[id]];
         //printf(" Deg_src : %llu ",deg_src);
-        for(unsigned long long int j=d_row_ptr[id]; j<d_row_ptr[id+1]; j++)
+        if(id < t_ver)
         {
-        unsigned long long int deg_dst = d_in_deg[d_org_id[d_col_idx[j]]];
-        //printf("  Deg_dst : %llu ",deg_dst);
-        if(deg_src < deg_dst)
-        {
-          //count++;
-          d_col_idx_Dir[pos] = d_col_idx[j];
-          pos++;
+            for(unsigned long long int j=d_row_ptr[id]; j<d_row_ptr[id+1]; j++)
+            {
+            unsigned long long int deg_dst = d_in_deg[d_org_id[d_col_idx[j]]];
+            //printf("  Deg_dst : %llu ",deg_dst);
+            if(deg_src < deg_dst)
+            {
+              //count++;
+              d_col_idx_Dir[pos] = d_col_idx[j];
+              pos++;
+            }
+            else if(deg_src == deg_dst)
+            {
+              if(d_org_id[d_col_idx[j]] < d_org_id[id])
+              {
+                //count++;
+                d_col_idx_Dir[pos] = d_col_idx[j];
+                pos++;
+              }
+            }
+            //bar.update();
+            //temp_arr[id] = count;
+            d_row_ptr_Dir[id+1] = pos;
+            }
         }
-        else if(deg_src == deg_dst)
+        if( id >= t_ver)
         {
-          if(d_org_id[d_col_idx[j]] < d_org_id[id])
-          {
-            //count++;
-            d_col_idx_Dir[pos] = d_col_idx[j];
-            pos++;
-          }
-        }
-        //bar.update();
-        //temp_arr[id] = count;
-        d_row_ptr_Dir[id+1] = pos;
+            for(unsigned long long int j=d_row_ptr[id]; j<d_row_ptr[id+1]; j++)
+            {
+                unsigned long long int deg_dst = d_in_deg[d_org_id[d_col_idx[j]]];
+                if(deg_src < deg_dst)
+                {
+                    if( id >= t_ver && d_col_idx[j] <= t_ver)
+                    {
+                        d_col_idx_Dir[pos] = d_col_idx[j];
+                        pos++;
+                    }
+                }
+                if(deg_src == deg_dst)
+                {
+                  if(d_org_id[d_col_idx[j]] < d_org_id[id])
+                  {
+                    //count++;
+                    d_col_idx_Dir[pos] = d_col_idx[j];
+                    pos++;
+                  }
+                }
+                //bar.update();
+                //temp_arr[id] = count;
+                d_row_ptr_Dir[id+1] = pos;
+            }
         }
     }
 }
@@ -189,8 +248,8 @@ print("DGL GRAPH CONSTRUCTION DONE \n",G)
 G = dgl.remove_self_loop(G)
 print("DGL SIMPLE GRAPH CONSTRUCTION DONE \n",G)
 #G = dgl.add_reverse_edges(G)
-G = dgl.to_bidirected(G)
-print("DGL GRAPH CONSTRUCTION DONE \n",G)
+#G = dgl.to_bidirected(G)
+#print("DGL GRAPH CONSTRUCTION DONE \n",G)
 
 isolated_nodes = ((G.in_degrees() == 0) & (G.out_degrees() == 0)).nonzero().squeeze(1)
 G.remove_nodes(isolated_nodes)
@@ -208,7 +267,21 @@ end = time.time()
 totalTime = totalTime + (end-start)
 print("Graph Construction Successfull!!!! \tTime Taken :",round((end-start),4), "Seconds")
 #-------------------------------------------Graph Construction is done ----------#
-
+print(G.edges())
+source_org, dest_org = G.edges()
+print(np.array(source_org))
+print(np.array(dest_org))
+source_org = np.array(source_org)
+dest_org = np.array(dest_org)
+source_int = source_org.astype(int)
+dest_int = dest_org.astype(int)
+print(np.array(source_int))
+print(np.array(dest_int))
+# Save source and dest arrays as columns in a CSV file using a loop
+with open(f'test_edge_list.csv', 'w', newline='') as csvfile:
+    writer = csv.writer(csvfile)
+    for j in range(len(source_int)):
+        writer.writerow([source_int[j], dest_int[j]])
 #-------------------------------------DGL METIS GRAPH PARTITIONING------------------------#
 #nopart = 2
 nopart = int(sys.argv[2])
@@ -246,10 +319,14 @@ for i in range(nopart):
     print(f"Current memory usage: { (mem_usage)} GB")
 
     org_id = np.array(parts[i].ndata['orig_id'])
+    print(org_id)
+    print(np.array(SG.nodes()))
     org_id_s = len(org_id)
     #SG = dgl.node_subgraph(G, org_id)
-    #n_id = np.array(SG.ndata[dgl.NID])
+    n_id = np.array(SG.ndata[dgl.NID])
+    print(n_id)
     v_arr = np.array(parts[i].ndata['inner_node'])
+    print(v_arr)
     #len(np.array(parts[i].ndata['inner_node']))
     t_ver = np.sum(v_arr)
     v_arr_s = len(np.array(parts[i].ndata['inner_node']))
@@ -258,10 +335,12 @@ for i in range(nopart):
     row_ptr = np.array(SG.adj_sparse('csr')[0])
     col_idx = np.array(SG.adj_sparse('csr')[1])
     # Sort the column indices within each row range specified by row_ptr
-    for x in range(len(row_ptr) - 1):
-        col_idx[row_ptr[x]:row_ptr[x + 1]] = np.sort(col_idx[row_ptr[x]:row_ptr[x + 1]])
+    #for x in range(len(row_ptr) - 1):
+    #    col_idx[row_ptr[x]:row_ptr[x + 1]] = np.sort(col_idx[row_ptr[x]:row_ptr[x + 1]])
     mem_usage = (psutil.Process().memory_info().rss)/(1024 * 1024 * 1024)
     print(f"Current memory usage: { (mem_usage)} GB")
+    print(row_ptr)
+    print(col_idx)
     mem_required = 0
     print("Converting UNDIR ---> DIR")
     start1 = time.time()
@@ -291,7 +370,7 @@ for i in range(nopart):
     block_size = 1024
     grid_size = (row_ptr_s + block_size - 1) // block_size
     print(row_ptr_s)
-    Find_size((grid_size,), (block_size,), (d_in_deg, d_org_id, d_row_ptr, d_col_idx, temp_arr, in_deg_s, org_id_s, row_ptr_s, col_idx_s))
+    Find_size((grid_size,), (block_size,), (d_in_deg, d_org_id, d_row_ptr, d_col_idx, temp_arr, in_deg_s, org_id_s, row_ptr_s, col_idx_s, t_ver))
     # Print the result
     #print(temp_arr)
     temp_arr_sum = cp.cumsum(temp_arr)
@@ -312,7 +391,7 @@ for i in range(nopart):
     mem_required = mem_required + memory_size
     print(f"The memory size required is: {mem_required} bytes")
     #Convert<<<nblocks,BLOCKSIZE>>>(d_in_deg, d_org_id, d_row_ptr, d_col_idx, temp_arr_sum, d_row_ptr_Dir, d_col_idx_Dir, in_deg_s, org_id_s, row_ptr_s, col_idx_s);
-    Convert((grid_size,), (block_size,), (d_in_deg, d_org_id, d_row_ptr, d_col_idx, temp_arr_sum, d_row_ptr_Dir, d_col_idx_Dir, in_deg_s, org_id_s, row_ptr_s, col_idx_s))
+    Convert((grid_size,), (block_size,), (d_in_deg, d_org_id, d_row_ptr, d_col_idx, temp_arr_sum, d_row_ptr_Dir, d_col_idx_Dir, in_deg_s, org_id_s, row_ptr_s, col_idx_s, t_ver))
 
     # create host array to hold selected elements
     num_elements = N
@@ -337,9 +416,28 @@ for i in range(nopart):
     print("Converting is done !!!!! Time taken: ",round((end1-start1),4))
     mem_usage = (psutil.Process().memory_info().rss)/(1024 * 1024 * 1024)
     print(f"Current memory usage: { (mem_usage)} GB")
-
     #--------------------writting CSR to file---------------------------------------#
     start = time.time()
+    #-------------edge_list------------------------------------------------------#
+    #out_filename_edge = str(file_name) + str(i) + ".csv"
+    #out_filename_edge = f'file_{i + 1}.csv'
+
+    edge_graph = dgl.graph(('csr', (row_ptr_dir, col_idx_dir, [])))
+    print(edge_graph.edges())
+    source, dest = edge_graph.edges()
+    print(np.array(source))
+    print(np.array(dest))
+    source = np.array(source)
+    dest = np.array(dest)
+    source_int = source.astype(int)
+    dest_int = dest.astype(int)
+    print(np.array(source_int))
+    print(np.array(dest_int))
+    # Save source and dest arrays as columns in a CSV file using a loop
+    with open(f'file_{i + 1}.csv', 'w', newline='') as csvfile:
+        writer = csv.writer(csvfile)
+        for j in range(len(source_int)):
+            writer.writerow([source_int[j], dest_int[j]])
     file.write("%i " % v_arr_s)
     file.write("%i " % len(row_ptr_dir))
     file.write("%i " % len(col_idx_dir))
