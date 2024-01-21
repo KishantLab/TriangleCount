@@ -257,17 +257,36 @@ for i in range(nopart):
     col_idx_s = len(np.array(SG.adj_sparse('csr')[1]))
     row_ptr = np.array(SG.adj_sparse('csr')[0])
     col_idx = np.array(SG.adj_sparse('csr')[1])
+    # Sort the column indices within each row range specified by row_ptr
+    for x in range(len(row_ptr) - 1):
+        col_idx[row_ptr[x]:row_ptr[x + 1]] = np.sort(col_idx[row_ptr[x]:row_ptr[x + 1]])
     mem_usage = (psutil.Process().memory_info().rss)/(1024 * 1024 * 1024)
     print(f"Current memory usage: { (mem_usage)} GB")
-
+    mem_required = 0
     print("Converting UNDIR ---> DIR")
     start1 = time.time()
+    memory_size = d_in_deg.nbytes
+    print(f"The memory size of the org_id is: {memory_size} bytes")
+    mem_required = mem_required + memory_size
+    memory_size = org_id.nbytes
+    print(f"The memory size of the org_id is: {memory_size} bytes")
+    mem_required = mem_required + memory_size
+    memory_size = row_ptr.nbytes
+    print(f"The memory size of the row_ptr is: {memory_size} bytes")
+    mem_required = mem_required + memory_size
+    memory_size = col_idx.nbytes
+    print(f"The memory size of the col_idx is: {memory_size} bytes")
+    mem_required = mem_required + memory_size
 
     d_org_id = cp.asarray(org_id)
     d_row_ptr = cp.asarray(row_ptr)
     d_col_idx = cp.asarray(col_idx)
     temp_arr = cp.empty_like(row_ptr)
     N =0
+
+    memory_size = temp_arr.nbytes
+    print(f"The memory size of the temp_arr is: {memory_size} bytes")
+    mem_required = mem_required + memory_size
     # Call the add kernel function on the GPU
     block_size = 1024
     grid_size = (row_ptr_s + block_size - 1) // block_size
@@ -285,6 +304,13 @@ for i in range(nopart):
     N = int(temp_arr_sum[temp_arr_sum_s-1])
     d_col_idx_Dir = cp.empty(N, dtype=col_idx.dtype)
 
+    memory_size = d_row_ptr_Dir.nbytes
+    print(f"The memory size of the d_row_ptr_Dir is: {memory_size} bytes")
+    mem_required = mem_required + memory_size
+    memory_size = d_col_idx_Dir.nbytes
+    print(f"The memory size of the d_col_idx_Dir is: {memory_size} bytes")
+    mem_required = mem_required + memory_size
+    print(f"The memory size required is: {mem_required} bytes")
     #Convert<<<nblocks,BLOCKSIZE>>>(d_in_deg, d_org_id, d_row_ptr, d_col_idx, temp_arr_sum, d_row_ptr_Dir, d_col_idx_Dir, in_deg_s, org_id_s, row_ptr_s, col_idx_s);
     Convert((grid_size,), (block_size,), (d_in_deg, d_org_id, d_row_ptr, d_col_idx, temp_arr_sum, d_row_ptr_Dir, d_col_idx_Dir, in_deg_s, org_id_s, row_ptr_s, col_idx_s))
 

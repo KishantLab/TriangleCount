@@ -127,6 +127,8 @@ if file_extension == '.mtx':
     v = th.tensor(coo.col, dtype=th.int64)
     G = dgl.DGLGraph()
     G.add_edges(u, v)
+    del u
+	del v
 elif file_extension == '.tsv':
     columns = ['Source','Dest','Data']
     file = pd.read_csv(sys.argv[1],delimiter='\t',names=columns)
@@ -138,6 +140,8 @@ elif file_extension == '.tsv':
     source=file['Source']
     source=np.array(source)
     G = dgl.graph((source,dest))
+    del source
+	del dest
 elif file_extension == '.txt':
     columns = ['Source','Dest']
     file = pd.read_csv(sys.argv[1],delimiter='\t',names=columns,skiprows=4)
@@ -149,6 +153,8 @@ elif file_extension == '.txt':
     source=file['Source']
     source=np.array(source)
     G = dgl.graph((source,dest))
+    del source
+	del dest
 elif file_extension == '.mmio':
     print("Converting mmio2dgl..")
     print("This might a take while..")
@@ -156,8 +162,11 @@ elif file_extension == '.mmio':
     coo = a_mtx.tocoo()
     u = th.tensor(coo.row, dtype=th.int64)
     v = th.tensor(coo.col, dtype=th.int64)
-    G = dgl.DGLGraph()
-    G.add_edges(u, v)
+    G = dgl.graph((v,u))
+    #G = dgl.DGLGraph()
+    #G.add_edges(u, v)
+    del u
+	del v
 elif file_extension == '.tsv_1':
     columns = ['Source','Dest']
     file = pd.read_csv(sys.argv[1],delimiter='\t',names=columns,low_memory=False,skiprows=1)
@@ -169,14 +178,16 @@ elif file_extension == '.tsv_1':
     v=file['Source']
     v=np.array(v)
     G = dgl.graph((v,u))
+    del u
+	del v
 else:
     print(f"Unsupported file type: {file_extension}")
     exit("If file is TAB Saprated data then remove all comments in file and save it with extention .tsv \n NOTE: only .tsv (Graph Challange), .txt(snap.stanford), .mtx(suit_sparse), .mmio(all) files are supported")
 
 end = time.time()
 totalTime = totalTime + (end-start)
-# del u
-# del v
+#del u
+#del v
 
 print("Data Loading Successfull!!!! \tTime Taken of Loading is :",round((end-start),4), "Seconds")
 mem_usage = (psutil.Process().memory_info().rss)/(1024 * 1024 * 1024)
@@ -186,12 +197,13 @@ print(f"Current memory usage: { (mem_usage)} GB")
 start = time.time()
 print("DGL GRAPH CONSTRUCTION DONE \n",G)
 #G = dgl.to_simple(G)
-G = dgl.remove_self_loop(G)
-print("DGL SIMPLE GRAPH CONSTRUCTION DONE \n",G)
+CG = dgl.remove_self_loop(G)
+del G
+print("DGL SIMPLE GRAPH CONSTRUCTION DONE \n",CG)
 #G = dgl.add_reverse_edges(G)
-G = dgl.to_bidirected(G)
+#G = dgl.to_bidirected(CG)
 print("DGL GRAPH CONSTRUCTION DONE \n",G)
-
+del CG
 isolated_nodes = ((G.in_degrees() == 0) & (G.out_degrees() == 0)).nonzero().squeeze(1)
 G.remove_nodes(isolated_nodes)
 print(G)

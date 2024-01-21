@@ -30,4 +30,4 @@ Dataset/tsv_files/*
 *.part
 *.part.*
 *part*
-
+*.csv
