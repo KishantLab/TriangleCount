@@ -1,3 +1,4 @@
+#new created files
 #this is the contigeous partition of graph were vertex assigned in partition based on contigeous manner
 from numpy import array
 import torch
@@ -107,7 +108,9 @@ void Convert(unsigned long long int *d_in_deg, unsigned long long int *d_org_id,
 #-------------------------------------Graph CONSTRUCTION USING data----------------#
 totalTime =0
 start = time.time()
-
+# Check if GPU is available and set device
+# device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+device = torch.device('cpu')
 file_name, file_extension = os.path.splitext(sys.argv[1])
 print(file_extension)
 suffix_csr = "_output.csr"
@@ -187,11 +190,9 @@ print(f"Current memory usage: { (mem_usage)} GB")
 #----------------------DGL PREPROCESS-----------------------------------#
 start = time.time()
 print("DGL GRAPH CONSTRUCTION DONE \n",G)
-#G = dgl.to_simple(G)
-G = dgl.remove_self_loop(G)
+#G = dgl.remove_self_loop(G)
 print("DGL SIMPLE GRAPH CONSTRUCTION DONE \n",G)
-#G = dgl.add_reverse_edges(G)
-G = dgl.to_bidirected(G)
+#G = dgl.to_bidirected(G)
 print("DGL GRAPH CONSTRUCTION DONE \n",G)
 
 isolated_nodes = ((G.in_degrees() == 0) & (G.out_degrees() == 0)).nonzero().squeeze(1)
@@ -218,30 +219,13 @@ print("Start Partitioning.....")
 start = time.time()
 total_part_time = 0
 start_part_time = time.time()
-#n_cuts, node_parts = pymetis.part_graph(nopart, adjacency=adjacency_list)
-#nodes_part = dgl.metis_partition_assignment(G, nopart, balance_ntypes=None, balance_edges=False, mode='k-way', objtype='cut')
-#parts = dgl.metis_partition(g, k, reshuffle=True, mode='k-way')
-#parts = dgl.metis_partition(G, nopart, reshuffle=True)
-
-node_parts = dgl.metis_partition_assignment(G,nopart)
-
-
-#node_parts = np.random.randint(0, nopart, size=Nodes)
-
-
+node_parts = np.random.randint(0, nopart, size=Nodes)
 end = time.time()
 totalTime = totalTime + (end-start)
 print("Partition is Done !!!!!\t Time of Partition is :",round((end-start),4), "Seconds")
 mem_usage = (psutil.Process().memory_info().rss)/(1024 * 1024 * 1024)
 print(f"Current memory usage: { (mem_usage)} bytes")
 
-#nodes_part = np.argwhere(np.array(membership) == i).ravel()
-print("Partitions Contructions with halo nodes ..")
-start = time.time()
-parts, orig_nids, orig_eids=dgl.partition_graph_with_halo(G, node_parts, 1, reshuffle=True)
-end = time.time()
-totalTime = totalTime + (end-start)
-print("Halo Node CONSTRUCTION is Done !!!!!\t Time of construction is :",round((end-start),4), "Seconds")
 file = open(out_filename2,'w')
 file.write("%i " % Nodes)
 file.write("%i\n" % Edges)
@@ -251,29 +235,68 @@ file2.write("%i\n" % Edges)
 end_part_time = time.time()
 total_part_time = total_part_time + (end_part_time - start_part_time)
 total_clean_time = 0
-for i in range(nopart):
-    #g0, nfeats, efeats, partition_book, graph_name, ntypes, etypes  = dgl.distributed.load_partition('MetisPart/part.json', i)
-    print("Reading Partiton %i is done !!!!! \n start coverting CSR...." %i)
-    start = time.time()
-    start_part_time = time.time()
-    #org_id = list(np.array(g0.ndata['orig_id']))
-    org_id = list(np.array(parts[i].ndata['orig_id']))
-    SG = G.subgraph(org_id)
-    mem_usage = (psutil.Process().memory_info().rss)/(1024 * 1024 * 1024)
-    print(f"Current memory usage: { (mem_usage)} GB")
 
-    org_id = np.array(parts[i].ndata['orig_id'])
+# g = G.to(device)
+d_node_parts = torch.tensor(node_parts, device=device)
+
+# Loop over each unique value
+for value in range(nopart):
+    print(value,"th","Partitions Contructions with halo nodes ..")
+
+    #-----------finding the indices of the partition------------
+    start = time.time()
+    print("Finding Indices...")
+    start_halo = time.time()
+    indices = torch.nonzero(d_node_parts == value, as_tuple=False).squeeze()
+    print(indices)
+    induced_nodes = indices.to(device)
+    end_halo = time.time()
+    print("index_array created!!!!\t time of construction is :", round((end_halo - start_halo),4), "seconds")
+
+    #------------------------ finding the predicessor and succesorr for nodes-----
+    start_halo = time.time()
+    successors = torch.cat([G.successors(induced_nodes[i]).to(device) for i in range(induced_nodes.shape[0])])
+    predecessors = torch.cat([G.predecessors(induced_nodes[i]).to(device) for i in range(induced_nodes.shape[0])])
+    all_neighbors = torch.cat([successors, predecessors]).unique()
+    halo_nodes = all_neighbors[~torch.isin(all_neighbors, induced_nodes)]
+    print(halo_nodes)
+    end_halo = time.time()
+    print("Finding Halo nodes done !!!\t time of finding is : ",round((end_halo - start_halo),4),"seconds")
+
+    #-------------------------creting the induced subgraph with halo-----------------------------------
+    start_halo = time.time()
+    # Combine induced subgraph and halo nodes
+    combined_nodes = torch.cat([induced_nodes, halo_nodes])
+    induced_with_halo_subgraph = dgl.node_subgraph(G, combined_nodes, relabel_nodes=True, store_ids=True)
+    end_halo = time.time()
+    print("Induced subgraph with halo created!!! \t time of construction is :", round((end_halo - start_halo),4), "seconds")
+
+
+    print(induced_with_halo_subgraph)
+    end = time.time()
+    totalTime = totalTime + (end-start)
+    print("Halo Node CONSTRUCTION is Done !!!!!\t Time of construction is :",round((end-start),4), "Seconds")
+
+    start_halo = time.time()
+    # Label inner nodes (induced nodes) vs halo nodes
+    inner_node = torch.zeros(combined_nodes.shape[0], dtype=torch.bool, device=device)
+    inner_node[:len(induced_nodes)] = True  # Mark induced nodes as True
+    induced_with_halo_subgraph.ndata['inner_node'] = inner_node
+
+    end_halo = time.time()
+    print("Inner node creation done !!! \t Time of construction is :", round((end_halo - start_halo),4), "seconds")
+
+    org_id = combined_nodes
     org_id_s = len(org_id)
-    #SG = dgl.node_subgraph(G, org_id)
-    #n_id = np.array(SG.ndata[dgl.NID])
-    v_arr = np.array(parts[i].ndata['inner_node'])
+
+    v_arr = np.array(induced_with_halo_subgraph.ndata['inner_node'].cpu())
     #len(np.array(parts[i].ndata['inner_node']))
     t_ver = np.sum(v_arr)
-    v_arr_s = len(np.array(parts[i].ndata['inner_node']))
-    row_ptr_s = len(np.array(SG.adj_tensors('csr')[0]))
-    col_idx_s = len(np.array(SG.adj_tensors('csr')[1]))
-    row_ptr = np.array(SG.adj_tensors('csr')[0])
-    col_idx = np.array(SG.adj_tensors('csr')[1])
+    v_arr_s = len(v_arr)
+    row_ptr_s = len(np.array(induced_with_halo_subgraph.adj_tensors('csr')[0].cpu()))
+    col_idx_s = len(np.array(induced_with_halo_subgraph.adj_tensors('csr')[1].cpu()))
+    row_ptr = np.array(induced_with_halo_subgraph.adj_tensors('csr')[0].cpu())
+    col_idx = np.array(induced_with_halo_subgraph.adj_tensors('csr')[1].cpu())
     # Sort the column indices within each row range specified by row_ptr
     for x in range(len(row_ptr) - 1):
         col_idx[row_ptr[x]:row_ptr[x + 1]] = np.sort(col_idx[row_ptr[x]:row_ptr[x + 1]])
@@ -311,18 +334,15 @@ for i in range(nopart):
     # create host array to hold selected elements
     num_elements = N
     col_idx_dir = np.empty(num_elements, dtype=d_col_idx_Dir.dtype)
-    # print(type(col_idx_dir))
-    # print(len(col_idx_dir))
+
 
     # copy selected elements from device array to host array
     start_index = 0
     end_index = start_index + num_elements
     col_idx_dir[start_index:end_index] = d_col_idx_Dir[:N].get()
 
-    # row_ptr_dir = cp.asnumpy(d_row_ptr_Dir)
-    # col_idx_dir = cp.asnumpy(d_col_idx_Dir)
     row_ptr_dir = d_row_ptr_Dir.get()
-    #col_idx_dir = d_col_idx_Dir.get()
+
     print(len(col_idx))
     print(len(col_idx_dir))
 
@@ -336,7 +356,7 @@ for i in range(nopart):
     start = time.time()
     G_dir = dgl.graph(('csr', (row_ptr_dir, col_idx_dir, [])))
     print(G_dir)
-    G_dir = G_dir.to('cuda')
+    G_dir = G_dir.to(device)
     while True:
         start_degree_time = time.time()
         G_indeg = G_dir.in_degrees()
@@ -346,7 +366,7 @@ for i in range(nopart):
         in_deg = []
         print("total nodes",total_nodes)
         start_for_loop_time = time.time()
-        # for i in range(t_ver,total_nodes): 
+        # for i in range(t_ver,total_nodes):
         #     if G_indeg[i]==0:
         #         in_deg.append(i)
         G_indeg = cp.asarray(G_indeg)
