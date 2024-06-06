@@ -1,5 +1,3 @@
-#new created files
-#this is the contigeous partition of graph were vertex assigned in partition based on contigeous manner
 from numpy import array
 import torch
 import numpy as np
@@ -123,7 +121,7 @@ void Halo_creation(unsigned long long int *d_row_ptr_G, unsigned long long int *
                     break;
                 }
             }
-            if (flag == 0)
+            if (flag != 1)
             {
                 
                 //int flag2 = 0;
@@ -142,56 +140,71 @@ void Halo_creation(unsigned long long int *d_row_ptr_G, unsigned long long int *
                 //unsigned long long int k = d_col_idx_G[j];
                 unsigned long long int pos = atomicAdd(d_pos, 1);
                 halo_nodes[pos] = d_col_idx_G[i];                
+                //printf("halo node: %ld\t",d_col_idx_G[i]);
             }
         }
     }
 }
 ''', 'Halo_creation')
 
-# Kernel to find successors
-find_successors_kernel = cp.RawKernel(r'''
+# Define a raw CUDA kernel
+delete_duplicates_kernel = cp.RawKernel(r'''
 extern "C" __global__
-void find_successors(unsigned long long int *row_ptr, unsigned long long int *col_idx, unsigned long long int *nodes, unsigned long long int *successors, unsigned long long int num_nodes) {
-    unsigned long long int idx = blockIdx.x * blockDim.x + threadIdx.x;
-    unsigned long long int pos;
-    if (idx == 0){
-        pos = 0;
-    }    
-    if (idx < num_nodes) {
-        unsigned long long int node = nodes[idx];
-        unsigned long long int start = row_ptr[node];
-        unsigned long long int end = row_ptr[node + 1];
-        for (unsigned long long int i = start; i < end; i++) {
-            successors[pos] = col_idx[i];
-            pos++;
+void delete_duplicates_kernel(int* input, int* output, int* output_len, int* seen, int N) {
+    int idx = threadIdx.x + blockDim.x * blockIdx.x;
+    
+    if (idx < N) {
+        int val = input[idx];
+        
+        // Use atomic operations to ensure only one thread processes a unique value
+        int old = atomicCAS(&seen[val], 0, 1);
+        
+        if (old == 0) {
+            int pos = atomicAdd(output_len, 1);
+            output[pos] = val;
         }
     }
 }
-''', 'find_successors')
+''', 'delete_duplicates_kernel')
 
-# Kernel to find predecessors
-find_predecessors_kernel = cp.RawKernel(r'''
-extern "C" __global__
-void find_predecessors(int* row_ptr, int* col_idx, int* nodes, int* predecessors, int num_nodes) {
-    int idx = blockIdx.x * blockDim.x + threadIdx.x;
-    if (idx < num_nodes) {
-        int node = nodes[idx];
-        int start = row_ptr[node];
-        int end = row_ptr[node + 1];
-        for (int i = start; i < end; i++) {
-            predecessors[idx * (end - start) + (i - start)] = col_idx[i];
-        }
-    }
-}
-''', 'find_predecessors')
-
-
+def delete_duplicates(input_list):
+    input_array = cp.array(input_list, dtype=cp.int32)
+    N = input_array.size
+    
+    output_array = cp.zeros(N, dtype=cp.int32)
+    output_len = cp.zeros(1, dtype=cp.int32)
+    
+    # Create a seen array with the same range as the possible values in the input
+    max_val = cp.max(input_array).item()
+    seen = cp.zeros(max_val + 1, dtype=cp.int32)
+    
+    # Calculate grid and block dimensions
+    threads_per_block = 256
+    blocks = (N + threads_per_block - 1) // threads_per_block
+    
+    # Launch the kernel
+    delete_duplicates_kernel(
+        (blocks,), (threads_per_block,),
+        (input_array, output_array, output_len, seen, N)
+    )
+    
+    # Copy output length and output array to host
+    output_len_host = output_len.get().item()  # Get the scalar value from the array
+    output_array_host = output_array[:output_len_host].get()
+    
+    del output_array
+    del output_len
+    del input_array
+    del max_val
+    del seen
+    del output_len_host
+    return output_array_host.tolist()
 #-------------------------------------Graph CONSTRUCTION USING data----------------#
 totalTime =0
 start = time.time()
 # Check if GPU is available and set device
-# device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-device = torch.device('cpu')
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+# device = torch.device('cpu')
 file_name, file_extension = os.path.splitext(sys.argv[1])
 print(file_extension)
 suffix_csr = "_output.csr"
@@ -325,6 +338,22 @@ col_idx_G = np.array(G.adj_tensors('csr')[1])
 # d_node_parts = torch.tensor(node_parts, device=device)
 totalHaloTime = 0
 
+# Function to filter out -1 values from the array using CuPy's efficient methods
+def filter_array(array):
+    mask = array != -1  # Create a mask for non -1 values
+    filtered_array = array[mask]  # Use the mask to filter the array
+    return filtered_array
+
+def filter_array_in_chunks(array, chunk_size=100000):
+    filtered_chunks = []
+    for start in range(0, len(array), chunk_size):
+        end = start + chunk_size
+        chunk = array[start:end]
+        filtered_chunk = filter_array(chunk)
+        filtered_chunks.append(filtered_chunk)
+    return cp.concatenate(filtered_chunks)
+
+
 # Loop over each unique value
 for value in range(nopart):
     print(value,"th","Partitions Contructions with halo nodes ..")
@@ -334,122 +363,91 @@ for value in range(nopart):
     print("Finding Indices...")
     start_halo = time.time()
 
-    d_node_parts = torch.tensor(node_parts, device=device)
+    d_node_parts = torch.tensor(node_parts)
     d_row_ptr_G = cp.asarray(row_ptr_G)
     d_col_idx_G = cp.asarray(col_idx_G)
 
     indices = torch.nonzero(d_node_parts == value, as_tuple=False).squeeze()
-    #print(indices)
-    induced_nodes = indices.to(device)
+    print("indices: ",indices)
+    print(type(indices))
+    induced_nodes = np.array(indices)
+    print("tyep induced_nodes:", type(induced_nodes))
     induced_nodes_s = len(induced_nodes)
     d_induced_nodes = cp.asarray(induced_nodes)
+    # print(d_induced_nodes)
     d_pos = cp.zeros(1, dtype=cp.uint64)
+    print("d_pos:",d_pos)
     end_halo = time.time()
     print("index_array created!!!!\t time of construction is :", round((end_halo - start_halo),4), "seconds")
-    # d_halo_nodes = cp.full(len(row_ptr_G), -1)
-    # d_halo_nodes = cp.full(len(col_idx_G), -1)
 
-    # #-----------------------find the succesorr and predicessor------------------
-    # Function to find successors of given nodes
-    # def find_successors(graph, nodes):
-        # with graph.local_scope():
-            # graph.ndata['out_degree'] = graph.out_degrees()
-            # return graph.successors(nodes)
-    # Function to find successors of given nodes
-    # start_succ = time.time()
-    # def find_successors(graph, nodes):
-        # with graph.local_scope():
-            # successors = []
-            # for node in nodes:
-                # succ = graph.successors(node)
-                # successors.append(succ.numpy())
-            # return np.concatenate(successors)
-
-    # Nodes for which we want to find successors
-    # Find successors using the GPU
-    # successors = find_successors(G, np.array(indices))
-    # end_succ = time.time()
-    # print(successors)
-    # print("successors done ", round((end_succ - start_succ),4),"seconds")
-    # d_halo_nodes = cp.full(len(row_ptr_G), -1)
-    # d_halo_nodes = cp.full(len(row_ptr_G), -1)
-
-    # num_edges = row_ptr_G[-1]  # Number of edges
-    # d_successors = cp.full(len(col_idx_G), -1)
-    # d_predecessors = cp.zeros(num_edges)
-    # Launch the kernels
-    # block_size = 1024
-    # grid_size = (induced_nodes_s + block_size - 1) // block_size
-    # find_successors_kernel((grid_size,), (block_size,), (d_row_ptr_G, d_col_idx_G, d_induced_nodes, d_successors, induced_nodes_s))
-    # cp.cuda.Device().synchronize()
-
-    # find_predecessors_kernel((grid_size,), (block_size,), (d_row_ptr_G, d_col_idx_G, d_induced_nodes, d_predecessors, Nodes))
-
-    # filtered_arr = d_successors[d_successors != -1]
-    # Copy results back to host
-    # halo_nodes = filtered_arr.get()
-    # h_predecessors = d_predecessors.get()
-    # print("predicessor:",h_predecessors)
-    # print("successors",halo_nodes)
-    # print(type(halo_nodes))
-    # print(len(halo_nodes))
-
-    #------------------------ finding the predicessor and succesorr for nodes-----
-    # start_halo = time.time()
-    # successors = torch.cat([G.successors(induced_nodes[i]).to(device) for i in range(induced_nodes.shape[0])])
-    # predecessors = torch.cat([G.predecessors(induced_nodes[i]).to(device) for i in range(induced_nodes.shape[0])])
-    # all_neighbors = torch.cat([successors, predecessors]).unique()
-    # halo_nodes = successors[~torch.isin(successors, induced_nodes)]
-    # halo_nodes = all_neighbors[~torch.isin(all_neighbors, induced_nodes)]
-    # end_halo = time.time()
-    # print(halo_nodes)
-    d_halo_nodes = cp.full(len(row_ptr_G), -1)
+    #-------------------finding Halo nodes of subgraph-----------------------
+    start_halo = time.time()
+    d_halo_nodes = cp.full(len(col_idx_G), -1)
+    print("d_halo_nodes:", d_halo_nodes)
     block_size = 1024
-    grid_size_G = (induced_nodes_s + block_size - 1) // block_size
-    print(induced_nodes_s)
-    Halo_creation((grid_size_G,), (block_size,), (d_row_ptr_G, d_col_idx_G, d_halo_nodes, induced_nodes_s, d_induced_nodes,d_pos))
+    grid_size = (induced_nodes_s + block_size - 1) // block_size
+    print("induced_nodes_s",induced_nodes_s)
+    Halo_creation((grid_size,), (block_size,), (d_row_ptr_G, d_col_idx_G, d_halo_nodes, induced_nodes_s, d_induced_nodes,d_pos))
+    # cp.cuda.Device().synchronize()
     end_halo = time.time()
-    filtered_arr = d_halo_nodes[d_halo_nodes != -1]
+    # filtered_arr = d_halo_nodes[d_halo_nodes != -1]
     print("Finding Halo nodes done !!!\t time of finding is : ",round((end_halo - start_halo),4),"seconds")
-    # index = cp.argmax(d_halo_nodes==-1)
-    # # if d_halo_nodes[index]==-1:
-    #     # Modify the array to keep only the elements before the first -1
-    #     # d_halo_nodes = d_halo_nodes[:index]
-    halo_nodes = filtered_arr.get()
-    halo_nodes = np.unique(halo_nodes)
-    #print(halo_nodes)
-    halo_nodes = torch.tensor(halo_nodes)
-    #print(halo_nodes)
+
+    start_halo = time.time()
+    # d_halo_nodes = d_halo_nodes[d_halo_nodes != -1]
+    d_halo_nodes = filter_array_in_chunks(d_halo_nodes)
+    print("removed -1 done")
+    # d_halo_nodes = filter_array(d_halo_nodes)
+    d_halo_nodes = cp.unique(d_halo_nodes)
+    print("finding unique valus done")
+    halo_nodes = d_halo_nodes.get()
+    print("getting data into cpu done")
+    print("size of halo nodes:",len(halo_nodes))
+    end_halo = time.time()
+
+    # print("Finding Halo nodes done !!!\t time of finding is : ",round((end_halo - start_halo),4),"seconds")
+    # start_halo = time.time()
+    # halo_nodes = halo_nodes[halo_nodes != -1]
+    # print("size of non unique halo nodes:",len(halo_nodes))
+    # halo_nodes = np.unique(halo_nodes)
+    # end_halo = time.time()
+    print("halo_nodes ",halo_nodes)
+    print("final halo nodes size:", len(halo_nodes))
+    print("Finding Halo nodes done !!!\t time of finding is : ",round((end_halo - start_halo),4),"seconds")
+    
+    start_halo = time.time()
+    # halo_nodes = torch.tensor(halo_nodes)
+
     del d_halo_nodes
     del d_induced_nodes
     del d_pos
-    del filtered_arr
+    # del filtered_arr
     del d_row_ptr_G
     del d_col_idx_G
     del d_node_parts
+    del indices
+    
+    end_halo = time.time()
     # print("Halo nodes cleaning done!!!")
     print("finding halo nodes is done!!! \t time of finding is :", round((end_halo - start_halo),4), "seconds")
     #-------------------------creting the induced subgraph with halo-----------------------------------
     start_halo = time.time()
-    # Combine induced subgraph and halo nodes
     # Convert tensors to lists for concatenation
-    indices = indices.tolist()
+    indices = induced_nodes.tolist()
     halo_nodes = halo_nodes.tolist()
-
+    print("convert list done")
     # Combine the lists while preserving order
     combined_nodes_list = indices + halo_nodes
-    #print("combined_nodes_list:",combined_nodes_list)
-    combined_nodes = pd.Series(combined_nodes_list).drop_duplicates().tolist()
-    # Convert the combined list back to tensor
-    combined_nodes = torch.tensor(combined_nodes)
-    # combined_nodes = torch.cat([induced_nodes, halo_nodes])
-    # combined_nodes = np.unique(combined_nodes)
-    #print("combined_nodes:",combined_nodes)
+    # print("combined_nodes_list: ",combined_nodes_list)
+    combined_nodes = delete_duplicates(combined_nodes_list)
+    # print("combined_nodes_cleaned: ",combined_nodes)
+    # print("combined_nodes_list:",combined_nodes_list)
+    # combined_nodes = pd.Series(combined_nodes_list).drop_duplicates().tolist()
+    combined_nodes = np.array(combined_nodes)
+    # combined_nodes = torch.tensor(combined_nodes)
+    # print("combined_nodes:",combined_nodes)
     print("size of combined_nodes", len(combined_nodes))
     induced_with_halo_subgraph = dgl.node_subgraph(G, combined_nodes, relabel_nodes=True)
-    i_subgraph = G.subgraph(combined_nodes)
-    print(i_subgraph)
-
     end_halo = time.time()
     print("Induced subgraph with halo created!!! \t time of construction is :", round((end_halo - start_halo),4), "seconds")
 
@@ -462,7 +460,7 @@ for value in range(nopart):
 
     start_halo = time.time()
     # Label inner nodes (induced nodes) vs halo nodes
-    inner_node = torch.zeros(combined_nodes.shape[0], dtype=torch.bool, device=device)
+    inner_node = torch.zeros(combined_nodes.shape[0], dtype=torch.bool)
     inner_node[:len(induced_nodes)] = True  # Mark induced nodes as True
     induced_with_halo_subgraph.ndata['inner_node'] = inner_node
 
@@ -471,8 +469,9 @@ for value in range(nopart):
     totalTime = totalTime + (end_halo-start_halo)
 
     org_id = np.array(induced_with_halo_subgraph.ndata[dgl.NID])
-    #print("org id:",org_id)
-    #print("nodes:",induced_with_halo_subgraph.nodes())
+    print("org id:",org_id)
+    print(type(org_id))
+    print("nodes:",induced_with_halo_subgraph.nodes())
     # org_id = combined_node /s
     org_id_s = len(org_id)
 
@@ -480,15 +479,16 @@ for value in range(nopart):
     del induced_nodes
     del combined_nodes
     del halo_nodes
-    del combined_nodes
     del combined_nodes_list
     del inner_node
-    del indices
 
     v_arr = np.array(induced_with_halo_subgraph.ndata['inner_node'].cpu())
+    v_arr = v_arr.astype(int)
     print("inner_node:",v_arr)
+    print("len of inner node:", len(v_arr))
     #len(np.array(parts[i].ndata['inner_node']))
     t_ver = np.sum(v_arr)
+    print("t_ver:",t_ver)
     v_arr_s = len(v_arr)
     row_ptr_s = len(np.array(induced_with_halo_subgraph.adj_tensors('csr')[0].cpu()))
     col_idx_s = len(np.array(induced_with_halo_subgraph.adj_tensors('csr')[1].cpu()))
@@ -500,6 +500,8 @@ for value in range(nopart):
     mem_usage = (psutil.Process().memory_info().rss)/(1024 * 1024 * 1024)
     print(f"Current memory usage: { (mem_usage)} GB")
 
+    print("row_ptr:", row_ptr)
+    print("col_idx:", col_idx)
     print("Converting UNDIR ---> DIR")
     start1 = time.time()
 
@@ -508,7 +510,9 @@ for value in range(nopart):
     d_org_id = cp.asarray(org_id)
     d_row_ptr = cp.asarray(row_ptr)
     d_col_idx = cp.asarray(col_idx)
-    temp_arr = cp.empty_like(row_ptr)
+    # temp_arr = cp.empty_like(row_ptr)
+    temp_arr = cp.full(row_ptr_s-1, 0, dtype=cp.uint64)
+    print("len_temp_arr:", len(temp_arr))
     N =0
     # Call the add kernel function on the GPU
     block_size = 1024
@@ -517,15 +521,18 @@ for value in range(nopart):
     Find_size((grid_size,), (block_size,), (d_in_deg, d_org_id, d_row_ptr, d_col_idx, temp_arr, in_deg_s, org_id_s, row_ptr_s, col_idx_s))
     cp.cuda.Device().synchronize()
     # Print the result
-    #print(temp_arr)
+    print("temp_arr: ",temp_arr)
     temp_arr_sum = cp.cumsum(temp_arr)
     #print(temp_arr_sum)
     temp_arr_sum_s = len(temp_arr_sum)
 
+    del temp_arr
+    print("temp_arr_sum_s:", temp_arr_sum_s)
     d_row_ptr_Dir = cp.empty_like(d_row_ptr)
     #d_col_idx_Dir = cp.empty_like(d_col_idx)
     dtype = type(col_idx)
     N = int(temp_arr_sum[temp_arr_sum_s-1])
+    print("N:",N)
     d_col_idx_Dir = cp.empty(N, dtype=col_idx.dtype)
 
     #Convert<<<nblocks,BLOCKSIZE>>>(d_in_deg, d_org_id, d_row_ptr, d_col_idx, temp_arr_sum, d_row_ptr_Dir, d_col_idx_Dir, in_deg_s, org_id_s, row_ptr_s, col_idx_s);
@@ -552,6 +559,8 @@ for value in range(nopart):
     print("Converting is done !!!!! Time taken: ",round((end1-start1),4))
     mem_usage = (psutil.Process().memory_info().rss)/(1024 * 1024 * 1024)
     print(f"Current memory usage: { (mem_usage)} GB")
+    print("row_ptr_dir:", row_ptr_dir)
+    print("col_idx_dir:", col_idx_dir)
 
     #--------------------writting CSR to file---------------------------------------#
     start = time.time()
@@ -570,20 +579,24 @@ for value in range(nopart):
         # for i in range(t_ver,total_nodes):
         #     if G_indeg[i]==0:
         #         in_deg.append(i)
-        g_indeg = cp.asarray(g_indeg)
-        indices = cp.arange(t_ver, total_nodes)
-        zero_indeg_indices = indices[g_indeg[indices] == 0]
-        in_deg = zero_indeg_indices.tolist()
+        d_indeg = cp.asarray(g_indeg)
+        d_indices = cp.arange(t_ver, total_nodes)
+        zero_indeg_indices = d_indices[d_indeg[d_indices] == 0]
+        dir_in_deg = zero_indeg_indices.tolist()
         end_for_loop_time = time.time()
         print("For loop execution time: ", round((end_for_loop_time-start_for_loop_time), 4), "Seconds")
-        if len(in_deg)==0:
+        if len(dir_in_deg)==0:
             break
         start_remove_time = time.time()
-        g_dir.remove_nodes(in_deg)
+        g_dir.remove_nodes(dir_in_deg)
         end_remove_time = time.time()
         print("Node Removal time: ", round((end_remove_time-start_remove_time), 4), "Seconds")
+
+        del d_indeg
+        del d_indices
+        del dir_in_deg
         del g_indeg
-        del indices
+
     print(g_dir)
     g_dir = g_dir.to('cpu')
     clean_row_ptr = g_dir.adj_tensors('csr')[0]
@@ -635,7 +648,6 @@ for value in range(nopart):
     del d_org_id
     del d_row_ptr
     del d_col_idx
-    del temp_arr
     del temp_arr_sum
     del d_row_ptr_Dir
     del d_col_idx_Dir
@@ -644,6 +656,9 @@ for value in range(nopart):
     del col_idx
     del row_ptr_dir
     del col_idx_dir
+    del v_arr
+    del g_dir
+    del induced_with_halo_subgraph
     #cp.cuda.runtime.free(intptr_t temp_arr)
     cp._default_memory_pool.free_all_blocks()
 del d_in_deg
