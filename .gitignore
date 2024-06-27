@@ -32,3 +32,6 @@ Dataset/tsv_files/*
 *part*
 *.csv
 dgl*
+*/test_codes/*
+*/test_code/*
+test_code/*

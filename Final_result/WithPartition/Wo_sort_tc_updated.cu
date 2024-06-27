@@ -8,8 +8,8 @@
 
 //#define NUM_VERTICES 9999999999
 //#define NUM_EDGES 9999999999
-#define N_THREADS_PER_BLOCK 640
-#define SHARED_MEM 640
+#define N_THREADS_PER_BLOCK 128
+#define SHARED_MEM 128
 
 inline cudaError_t checkCuda(cudaError_t result)
 {
@@ -105,12 +105,13 @@ __global__ void Find_Triangle(unsigned long long int *d_col_index, unsigned long
 			unsigned long long int end2 = d_row_ptr[neb[i]+1]-1;
 			unsigned long long int size_list2 = end2 - start2;
 			unsigned long long int M = ceil((float)(size_list2+1)/N_THREADS_PER_BLOCK);
-#pragma unroll
-			for( unsigned long long int k = 0; k < M; k++)
+      #pragma unroll
+			// for( unsigned long long int k = 0; k < M; k++)
+			for( unsigned long long int id = tid; id < size_list2; id+=N_THREADS_PER_BLOCK)
 			{
-				unsigned long long int id = N_THREADS_PER_BLOCK * k + tid;
-				if(id <= size_list2)
-				{
+				// unsigned long long int id = N_THREADS_PER_BLOCK * k + tid;
+				// if(id <= size_list2)
+				// {
 					unsigned long long int result = 0;
 					result = Search(d_col_index[id+start2],neb,size_list1);
 					//printf("\nedge(%llu , %llu) : %llu , tid : %llu, size_list1 :%llu , size_list2: %llu, start2 :%llu , end2 :%llu skey:%llu, neb[0]:%llu ,neb[%llu]:%llu",bid, neb[i], result,tid,size_list1+1,size_list2+1,start2,end2,d_col_index[id+start2],neb[0],size_list1,neb[size_list1]);
@@ -119,7 +120,7 @@ __global__ void Find_Triangle(unsigned long long int *d_col_index, unsigned long
 					triangle += result;
 
 					//if(result>=1) printf("%llu \n", result);
-				}
+				// }
 			}
 		}
 	}
@@ -146,11 +147,12 @@ __global__ void Find_Triangle(unsigned long long int *d_col_index, unsigned long
 					unsigned long long int size_list2 = end2 - start2;
 					unsigned long long int M = ceil((float)(size_list2+1)/N_THREADS_PER_BLOCK);
 #pragma unroll
-					for( unsigned long long int k = 0; k < M; k++)
+					// for( unsigned long long int k = 0; k < M; k++)
+					for( unsigned long long int tempid = tid; tempid < size_list2; tempid+=N_THREADS_PER_BLOCK)
 					{
-						unsigned long long int tempid = N_THREADS_PER_BLOCK * k + tid;
-						if(tempid <= size_list2)
-						{
+						// unsigned long long int tempid = N_THREADS_PER_BLOCK * k + tid;
+						// if(tempid <= size_list2)
+						// {
 							unsigned long long int result = 0;
 							result = Search(d_col_index[tempid+start2],neb,size);
 							//printf("\nedge(%llu , %llu) : %llu , tid : %llu, size_list1 :%llu , size_list2: %llu, start2 :%llu , end2 :%llu, id :%llu, skey :%llu, N:%llu, I:%llu, remining_size:%llu, size:%llu, neb[0]:%llu, neb[%llu]:%llu if ",bid, d_col_index[j], result,tid,size_list1+1,size_list2+1,start2,end2,id,d_col_index[tempid+start2],N,i,remining_size,size,neb[0],size,neb[size]);
@@ -158,7 +160,7 @@ __global__ void Find_Triangle(unsigned long long int *d_col_index, unsigned long
 							//printf("\nedge(%llu , %llu) src : %llu dst :%llu ", bid,d_col_index[j],size_list1+1,size_list2+1);
 							triangle += result;
 							//if(result>=1) printf("%llu \n", result);
-						}
+						// }
 					}
 					__syncthreads();
 				}
@@ -181,11 +183,12 @@ __global__ void Find_Triangle(unsigned long long int *d_col_index, unsigned long
 					unsigned long long int size_list2 = end2 - start2;
 					unsigned long long int M = ceil((float)(size_list2+1)/ N_THREADS_PER_BLOCK);
 #pragma unroll
-					for (unsigned long long int k = 0; k < M; k++)
+					// for (unsigned long long int k = 0; k < M; k++)
+					for( unsigned long long int tempid = tid; tempid < size_list2; tempid+=N_THREADS_PER_BLOCK)
 					{
-						unsigned long long int tempid = N_THREADS_PER_BLOCK * k + tid;
-						if(tempid <= size_list2)
-						{
+						// unsigned long long int tempid = N_THREADS_PER_BLOCK * k + tid;
+						// if(tempid <= size_list2)
+						// {
 							unsigned long long int result = 0;
 							result = Search(d_col_index[tempid+start2],neb,remining_size);
 							//printf("\nedge(%llu , %llu) : %llu , tid : %llu, size_list1 :%llu , size_list2: %llu, start2 :%llu , end2 :%llu, id :%llu, skey :%llu, N:%llu, I:%llu neb[0]:%llu, neb[%llu]:%llu, else",bid, d_col_index[j], result,tid,size_list1+1,size_list2+1,start2,end2,id,d_col_index[tempid+start2],N,i,neb[0],remining_size,neb[remining_size]);
@@ -194,7 +197,7 @@ __global__ void Find_Triangle(unsigned long long int *d_col_index, unsigned long
 							triangle += result;
 
 							//if(result>=1) printf("%llu \n", result);
-						}
+						// }
 					}
 					__syncthreads();				}
 			}
@@ -252,7 +255,7 @@ int main(int argc, char *argv[])
 			fscanf(file, "%llu", &rp_pos);
 			fscanf(file, "%llu", &ci_pos);
 			fscanf(file, "%llu", &t_ver);
-			// printf("v_pos: %llu, ci_pos: %llu, rp_pos: %llu, t_ver: %llu",v_pos,ci_pos,rp_pos,t_ver);
+			printf("v_pos: %llu, ci_pos: %llu, rp_pos: %llu, t_ver: %llu",v_pos,ci_pos,rp_pos,t_ver);
 			printf("\nPart %llu executing :",i);
 			//int x;
 			//scanf("%d", &x);

@@ -124,59 +124,69 @@ out_filename1 = str(file_name) + suffix_csr
 #out_filename2 = str(file_name) + suffix_part + str(sys.argv[2])
 print(out_filename1)
 #out_filename2 = file_name + suffix_part + str(sys.argv[2])
-if file_extension == '.mtx':
-    print("Converting mtx2dgl..")
-    print("This might a take while..")
-    a_mtx = mmread(sys.argv[1])
-    coo = a_mtx.tocoo()
-    u = th.tensor(coo.row, dtype=th.int64)
-    v = th.tensor(coo.col, dtype=th.int64)
-    G = dgl.graph((u, v))
-    #G.add_edges(u, v)
-elif file_extension == '.tsv':
-    columns = ['Source','Dest','Data']
-    file = pd.read_csv(sys.argv[1],delimiter='\t',names=columns)
-    print("Converting tsv2dgl..")
-    print("This might a take while..")
-    u=file['Dest']
-    u=np.array(u)
-    print(file['Dest'])
-    v=file['Source']
-    v=np.array(v)
-    G = dgl.graph((v,u),idtype=torch.int32)
-elif file_extension == '.txt':
-    columns = ['Source','Dest']
-    file = pd.read_csv(sys.argv[1],delimiter='\t',names=columns,skiprows=4)
-    print("Converting txt2dgl..")
-    print("This might a take while..")
-    u=file['Dest']
-    u=np.array(u)
-    print(file['Dest'])
-    v=file['Source']
-    v=np.array(v)
-    G = dgl.graph((v,u))
-elif file_extension == '.mmio':
-    print("Converting mmio2dgl..")
-    print("This might a take while..")
-    a_mtx = mmread(sys.argv[1])
-    coo = a_mtx.tocoo()
-    u = th.tensor(coo.row, dtype=th.int64)
-    v = th.tensor(coo.col, dtype=th.int64)
-    G = dgl.graph((u, v))
-    #G.add_edges(u, v)
-elif file_name == '.out':
-    print("Converting mmio2dgl..")
-    print("This might a take while..")
-    a_mtx = mmread(sys.argv[1])
-    coo = a_mtx.tocoo()
-    u = th.tensor(coo.row, dtype=th.int64)
-    v = th.tensor(coo.col, dtype=th.int64)
-    G = dgl.graph((u, v))
-    #G.add_edges(u, v)
-else:
-    print(f"Unsupported file type: {file_extension}")
-    exit("If file is TAB Saprated data then remove all comments in file and save it with extention .tsv \n NOTE: only .tsv (Graph Challange), .txt(snap.stanford), .mtx(suit_sparse), .mmio(all) files are supported")
-
+# if file_extension == '.mtx':
+#     print("Converting mtx2dgl..")
+#     print("This might a take while..")
+#     a_mtx = mmread(sys.argv[1])
+#     coo = a_mtx.tocoo()
+#     u = th.tensor(coo.row, dtype=th.int64)
+#     v = th.tensor(coo.col, dtype=th.int64)
+#     G = dgl.graph((u, v))
+#     #G.add_edges(u, v)
+# elif file_extension == '.tsv':
+#     columns = ['Source','Dest','Data']
+#     file = pd.read_csv(sys.argv[1],delimiter='\t',names=columns)
+#     print("Converting tsv2dgl..")
+#     print("This might a take while..")
+#     u=file['Dest']
+#     u=np.array(u)
+#     print(file['Dest'])
+#     v=file['Source']
+#     v=np.array(v)
+#     G = dgl.graph((v,u),idtype=torch.int32)
+# elif file_extension == '.txt':
+#     columns = ['Source','Dest']
+#     file = pd.read_csv(sys.argv[1],delimiter='\t',names=columns,skiprows=4)
+#     print("Converting txt2dgl..")
+#     print("This might a take while..")
+#     u=file['Dest']
+#     u=np.array(u)
+#     print(file['Dest'])
+#     v=file['Source']
+#     v=np.array(v)
+#     G = dgl.graph((v,u))
+# elif file_extension == '.mmio':
+#     print("Converting mmio2dgl..")
+#     print("This might a take while..")
+#     a_mtx = mmread(sys.argv[1])
+#     coo = a_mtx.tocoo()
+#     u = th.tensor(coo.row, dtype=th.int64)
+#     v = th.tensor(coo.col, dtype=th.int64)
+#     G = dgl.graph((u, v))
+#     #G.add_edges(u, v)
+# elif file_name == '.out':
+#     print("Converting mmio2dgl..")
+#     print("This might a take while..")
+#     a_mtx = mmread(sys.argv[1])
+#     coo = a_mtx.tocoo()
+#     u = th.tensor(coo.row, dtype=th.int64)
+#     v = th.tensor(coo.col, dtype=th.int64)
+#     G = dgl.graph((u, v))
+#     #G.add_edges(u, v)
+# else:
+#     print(f"Unsupported file type: {file_extension}")
+#     exit("If file is TAB Saprated data then remove all comments in file and save it with extention .tsv \n NOTE: only .tsv (Graph Challange), .txt(snap.stanford), .mtx(suit_sparse), .mmio(all) files are supported")
+# skiprows=4
+columns = ['Source','Dest']
+file = pd.read_csv(sys.argv[1],delimiter=' ',names=columns)
+print("Converting txt2dgl..")
+print("This might a take while..")
+u=file['Dest']
+u=np.array(u)
+print(file['Dest'])
+v=file['Source']
+v=np.array(v)
+G = dgl.graph((v,u))
 end = time.time()
 del u
 del v
@@ -191,7 +201,7 @@ print(f"The variable 'graph_object' is consuming {size} bytes of memory.")
 start = time.time()
 print("DGL GRAPH CONSTRUCTION DONE \n",G)
 #G = dgl.to_simple(G)
-G = dgl.remove_self_loop(G)
+# G = dgl.remove_self_loop(G)
 mem_usage = (psutil.Process().memory_info().rss)/(1024 * 1024 * 1024)
 print(f"Current memory { (mem_usage)} GB,\t {psutil.Process().memory_percent()} % used")
 
@@ -199,7 +209,7 @@ print("DGL SIMPLE GRAPH CONSTRUCTION DONE \n",G)
 #G = dgl.add_reverse_edges(G)
 size = sys.getsizeof(G)
 print(f"The variable 'graph_object' is consuming {size} bytes of memory.")
-G = dgl.to_bidirected(G)
+# G = dgl.to_bidirected(G)
 mem_usage = (psutil.Process().memory_info().rss)/(1024 * 1024 * 1024)
 print(f"Current memory usage: { (mem_usage)} GB")
 print("DGL GRAPH CONSTRUCTION DONE \n",G)
