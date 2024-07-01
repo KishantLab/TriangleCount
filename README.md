@@ -69,6 +69,10 @@ Download the dataset from websites like [GraphChallenge](https://graphchallenge.
     cd TriangleCount/Med_dataset/
     python3 without_part_preprocess.py <filename>
     ```
+    Example:
+    ```sh
+    python3 without_part_preprocess.py ../data/Dataset/GraphChallange/amazon0302_adj.tsv
+    ```
 2. Navigate to the source directory:
     ```sh
     cd ../src/WithoutPartition/
