@@ -5,7 +5,6 @@ import pandas as pd
 import sys
 import dgl
 import csv
-import pymetis
 import time
 import torch as th
 from scipy.io import mmread
@@ -175,7 +174,7 @@ elif file_name == '.out':
     #G.add_edges(u, v)
 else:
     print(f"Unsupported file type: {file_extension}")
-    exit("If file is TAB Saprated data then remove all comments in file and save it with extention .tsv \n NOTE: only .tsv (Graph Challange), .txt(snap.stanford), .mtx(suit_sparse), .mmio(all) files are supported")
+    exit("If file is TAB Saprated data then remove all comments in file and save it with extention .tsv \n NOTE: only .tsv (Graph Challange), .txt(snap.stanford), .mtx(suit_tensors), .mmio(all) files are supported")
 
 end = time.time()
 del u
@@ -223,10 +222,10 @@ print("Graph Construction Successfull!!!! \tTime Taken :",round((end-start),4), 
 # print("Reorder is Done !!!!!\t Time of Reorder is :",round((end-start),4), "Seconds")
 #-------------------------------------Graph CONSTRUCTION USING MtX----------------#
 file = open(out_filename1,'w')
-row_ptr_s = len(np.array(G.adj_sparse('csr')[0]))
-col_idx_s = len(np.array(G.adj_sparse('csr')[1]))
-row_ptr = np.array(G.adj_sparse('csr')[0])
-col_idx = np.array(G.adj_sparse('csr')[1])
+row_ptr_s = len(np.array(G.adj_tensors('csr')[0]))
+col_idx_s = len(np.array(G.adj_tensors('csr')[1]))
+row_ptr = np.array(G.adj_tensors('csr')[0])
+col_idx = np.array(G.adj_tensors('csr')[1])
 size = sys.getsizeof(G)
 print(f"The variable 'graph_object' is consuming {size} bytes of memory.")
 mem_usage = (psutil.Process().memory_info().rss)/(1024 * 1024 * 1024)
