@@ -92,6 +92,8 @@ __global__ void Find_Triangle(unsigned long long int *d_col_index, unsigned long
 	}
 	__syncthreads();
 	unsigned long long int size_list1=end-start;
+  if(size_list1 >= 2)
+  {
 	if(size_list1 < N_THREADS_PER_BLOCK)
 	{
 		if(tid <= size_list1)
@@ -199,7 +201,8 @@ __global__ void Find_Triangle(unsigned long long int *d_col_index, unsigned long
 					__syncthreads();				}
 			}
 		}
-	}
+  }
+  
 	//if(tid ==0)
 	//printf("Block Id %llu Thread Id %llu triangles %d \n",bid, tid, triangle);
 	//}
@@ -216,6 +219,10 @@ __global__ void Find_Triangle(unsigned long long int *d_col_index, unsigned long
 		__syncthreads();
 		d_sum[bid] = block_sum;
 	}
+  }
+  else{
+    d_sum[bid] = 0;
+  }
 }
 int main(int argc, char *argv[])
 {

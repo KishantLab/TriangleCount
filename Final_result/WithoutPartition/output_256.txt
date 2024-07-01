@@ -1,0 +1,48 @@
+
+Search : 0.694252 sec Vertex : 13593032 Edge : 334591525 Triangle : 13540543134  Sum_result : 0.000229 Sec, total_time : 0.694481 Sec
+
+Search : 0.693831 sec Vertex : 13593032 Edge : 334591525 Triangle : 13540543134  Sum_result : 0.000171 Sec, total_time : 0.694002 Sec
+
+Search : 0.695795 sec Vertex : 13593032 Edge : 334591525 Triangle : 13540543134  Sum_result : 0.000177 Sec, total_time : 0.695972 Sec
+
+Total avg of 3 RUNS : 0.694818 Sec
+
+Search : 0.774541 sec Vertex : 115554441 Edge : 854809761 Triangle : 12262060053  Sum_result : 0.001363 Sec, total_time : 0.775904 Sec
+
+Search : 0.756220 sec Vertex : 115554441 Edge : 854809761 Triangle : 12262060053  Sum_result : 0.001320 Sec, total_time : 0.757540 Sec
+
+Search : 0.755346 sec Vertex : 115554441 Edge : 854809761 Triangle : 12262060053  Sum_result : 0.001318 Sec, total_time : 0.756664 Sec
+
+Total avg of 3 RUNS : 0.763369 Sec
+
+Search : 0.789551 sec Vertex : 39454463 Edge : 783027125 Triangle : 21779366056  Sum_result : 0.000508 Sec, total_time : 0.790059 Sec
+
+Search : 0.777399 sec Vertex : 39454463 Edge : 783027125 Triangle : 21779366056  Sum_result : 0.000464 Sec, total_time : 0.777863 Sec
+
+Search : 0.777868 sec Vertex : 39454463 Edge : 783027125 Triangle : 21779366056  Sum_result : 0.000461 Sec, total_time : 0.778328 Sec
+
+Total avg of 3 RUNS : 0.782083 Sec
+
+Search : 2.460497 sec Vertex : 41290648 Edge : 1027474947 Triangle : 48374551054  Sum_result : 0.000539 Sec, total_time : 2.461035 Sec
+
+Search : 2.475655 sec Vertex : 41290648 Edge : 1027474947 Triangle : 48374551054  Sum_result : 0.000495 Sec, total_time : 2.476149 Sec
+
+Search : 2.471813 sec Vertex : 41290648 Edge : 1027474947 Triangle : 48374551054  Sum_result : 0.000497 Sec, total_time : 2.472310 Sec
+
+Total avg of 3 RUNS : 2.469831 Sec
+
+Search : 3.658505 sec Vertex : 65608366 Edge : 1806067135 Triangle : 4173724142  Sum_result : 0.000826 Sec, total_time : 3.659332 Sec
+
+Search : 3.683637 sec Vertex : 65608366 Edge : 1806067135 Triangle : 4173724142  Sum_result : 0.000770 Sec, total_time : 3.684407 Sec
+
+Search : 3.702208 sec Vertex : 65608366 Edge : 1806067135 Triangle : 4173724142  Sum_result : 0.000772 Sec, total_time : 3.702980 Sec
+
+Total avg of 3 RUNS : 3.682240 Sec
+
+Search : 14.717612 sec Vertex : 41652230 Edge : 1202513046 Triangle : 34824916864  Sum_result : 0.000577 Sec, total_time : 14.718189 Sec
+
+Search : 14.773782 sec Vertex : 41652230 Edge : 1202513046 Triangle : 34824916864  Sum_result : 0.000521 Sec, total_time : 14.774303 Sec
+
+Search : 14.804039 sec Vertex : 41652230 Edge : 1202513046 Triangle : 34824916864  Sum_result : 0.000520 Sec, total_time : 14.804559 Sec
+
+Total avg of 3 RUNS : 14.765683 Sec
