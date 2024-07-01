@@ -36,7 +36,7 @@ Download the dataset from websites like [GraphChallenge](https://graphchallenge.
     ```
     cd ../../
     cd preprocess_GPU/Halo_cleanned_preprocess/
-    ./round_clean_sg <part_number> <filename.csr> <filename.csr.node_parts_<part_method>_<part_number>
+    ./round_clean_sg <part_number> <filename.csr> <filename.csr_node_parts_<part_method>_<part_number>
     ```
     Example:
     ```
