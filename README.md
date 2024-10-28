@@ -120,8 +120,3 @@ Download the dataset from websites like [GraphChallenge](https://graphchallenge.
     ./run.sh
     ```
     Note: In `run.sh`, pass the `<filename.csr>` generated in `Med_dataset/without_part_preprocess.py` file.
-
-## Authors
-
-- Kishan Tamboli
-- Vinayak Kesarwani
