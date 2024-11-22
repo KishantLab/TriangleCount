@@ -662,69 +662,9 @@ void create_subgraph_with_halo(unsigned long long nopart,  unsigned long long *n
 				cout<<"Time measured for sorting: "<<elapsed_sort<<" seconds."<<endl;
 				total_kernel_time += elapsed_sort;
 
-				// printf("sorted col idx:\n");
-				// for(int sort=0; sort<ci_pos; sort++)
-				// {
-				// 	printf("%llu ",d_col_idx_dir[sort]);
-				// }
-				// printf("\n");
-				// struct timeval begin_sort, end_sort;
-				// gettimeofday(&begin_sort, 0);
-        // unsigned long long int ci_pos = temp_arr_sum_cpu[h_combined_nodes_s-1];
-        // unsigned long long int rp_pos = (h_combined_nodes_s+1);
-        // unsigned long long int  *d_values_out;      // e.g., [-, -, -, -, -, -, -]
-    		// checkCuda(cudaMallocManaged(&d_values_out,sizeof(unsigned long long int)*ci_pos));
-    		// cudaMemset(d_values_out, 0, ci_pos * sizeof(unsigned long long int));
-    		// void     *d_temp_storage = NULL;
-    		// cub::DeviceSegmentedRadixSort::SortKeys(d_temp_storage, temp_storage_bytes, d_col_idx_dir, d_values_out,
-    		//     ci_pos, rp_pos-1, d_row_ptr_dir, d_row_ptr_dir + 1);
-    		// // Allocate temporary storage
-    		// cudaMallocManaged(&d_temp_storage, temp_storage_bytes);
-    		// // Run sorting operation
-    		// cub::DeviceSegmentedRadixSort::SortKeys(d_temp_storage, temp_storage_bytes, d_col_idx_dir, d_values_out,
-    		//     ci_pos, rp_pos-1, d_row_ptr_dir, d_row_ptr_dir + 1);
-    		// // d_keys_out            <-- [6, 7, 8, 0, 3, 5, 9]
-    		// checkCuda(cudaFree(d_col_idx_dir));
-    		// checkCuda(cudaFree(d_temp_storage));
-				//
-				// gettimeofday(&end_sort, 0);
-				// long seconds_sort = end_sort.tv_sec - begin_sort.tv_sec;
-				// long microseconds_sort = end_sort.tv_usec - begin_sort.tv_usec;
-				// double elapsed_sort = seconds_sort + microseconds_sort*1e-6;
-				// cout<<"Time measured for sorting: "<<elapsed_sort<<" seconds."<<endl;
-				// total_kernel_time += elapsed_sort;
-
-        // gettimeofday(&end5, 0);
-        // long seconds5 = end5.tv_sec - begin5.tv_sec;
-        // long microseconds5 = end5.tv_usec - begin5.tv_usec;
-        // double elapsed5 = seconds5 + microseconds5*1e-6;
-        // cout<<"Time measured for convert undir to dir: "<<elapsed5<<" seconds."<<endl;
-        // total_kernel_time += elapsed5;
-
-        // unsigned long long *row_ptr_dir = (unsigned long long *)malloc((h_combined_nodes_s+1) * sizeof(unsigned long long));
-        // unsigned long long *col_idx_dir = (unsigned long long *)malloc((temp_arr_sum_cpu[h_combined_nodes_s-1]) * sizeof(unsigned long long));
-        // cudaMemcpy(row_ptr_dir, d_row_ptr_dir, (h_combined_nodes_s+1) * sizeof(unsigned long long), cudaMemcpyDeviceToHost);
-        // cudaMemcpy(col_idx_dir, d_values_out, (temp_arr_sum_cpu[h_combined_nodes_s-1]) * sizeof(unsigned long long), cudaMemcpyDeviceToHost);
         cout<<"Num Nodes: "<<h_combined_nodes_s<<endl;
         cout<<"Num Edges: "<<temp_arr_sum_cpu[h_combined_nodes_s-1]<<endl;
 
-        // cout<<"Row Pointer: "<<endl;
-        // for(int i = 0; i<h_combined_nodes_s+1; i++){
-        //     cout<<d_row_ptr_dir[i]<<" ";
-        // }
-        // cout<<endl;
-				//
-        // cout<<"Column Index: "<<endl;
-        // for(int i = 0; i<temp_arr_sum_cpu[h_combined_nodes_s-1]; i++){
-        //     cout<<d_col_idx_dir[i]<<" ";
-        // }
-        // cout<<endl;
-				//
-				// cout<<"Indegree: "<<endl;
-        // for(int i = 0; i<num_nodes; i++){
-        //     cout<<d_indegree[i]<<" ";
-        // }
-        // cout<<endl;
 				unsigned long long Num_Nodes = h_combined_nodes_s;
 				unsigned long long Num_Edges = temp_arr_sum_cpu[h_combined_nodes_s-1];
 
@@ -837,31 +777,7 @@ void create_subgraph_with_halo(unsigned long long nopart,  unsigned long long *n
             clean_subgraph<<<grid_size_G, BLOCK_SIZE>>>(temp_arr_sum1, d_row_ptr_clean, d_col_idx_clean, d_row_ptr_dir, d_col_idx_dir, d_new_combined_nodes, d_index_array_clean, new_combined_node_s);
             cudaDeviceSynchronize();
             cudaFree(d_index_array_clean);
-            // cudaFree(d_values_out);
-            // cudaFree(d_row_ptr_dir);
-            // cudaFree(d_indegree);
-
-            // gettimeofday(&end6, 0);
-            // cout<<"subgraph cleaning done"<<endl;
-
-            // unsigned long long ci_pos = temp_arr_sum1[new_combined_node_s-1];
-            // unsigned long long rp_pos = new_combined_node_s+1;
-            // unsigned long long int  *d_clean_col_idx;      // e.g., [-, -, -, -, -, -, -]
-            // checkCuda(cudaMallocManaged(&d_clean_col_idx,sizeof(unsigned long long int)*ci_pos));
-            // cudaMemset(d_clean_col_idx, 0, ci_pos * sizeof(unsigned long long int));
-            // void *d_temp_storage8 = NULL;
-            // temp_storage_bytes = 0;
-            // cub::DeviceSegmentedRadixSort::SortKeys(d_temp_storage8, temp_storage_bytes, d_col_idx_clean, d_clean_col_idx,
-            //     ci_pos, rp_pos-1, d_row_ptr_clean, d_row_ptr_clean + 1);
-            // // Allocate temporary storage
-            // cudaMallocManaged(&d_temp_storage8, temp_storage_bytes);
-            // // Run sorting operation
-            // cub::DeviceSegmentedRadixSort::SortKeys(d_temp_storage8, temp_storage_bytes, d_col_idx_clean, d_clean_col_idx,
-            //     ci_pos, rp_pos-1, d_row_ptr_clean, d_row_ptr_clean + 1);
-            // // d_keys_out            <-- [6, 7, 8, 0, 3, 5, 9]
-            // checkCuda(cudaFree(d_col_idx_clean));
-            // checkCuda(cudaFree(d_temp_storage8));
-
+ 
             gettimeofday(&end6, 0);
             cout<<"subgraph cleaning done"<<endl;
 
@@ -922,41 +838,6 @@ void create_subgraph_with_halo(unsigned long long nopart,  unsigned long long *n
 					}
 						// unsigned long long int ci_pos = temp_arr_sum_cpu[new_combined_node_s-1];
 
-						// unsigned long long int  *d_values_out;      // e.g., [-, -, -, -, -, -, -]
-						// cudaMallocManaged(&d_values_out, sizeof(unsigned long long int)*ci_pos);
-						// cudaMemset(d_values_out, 0, ci_pos * sizeof(unsigned long long int));
-
-						// grid_size_G = ((new_combined_node_s+1) + BLOCK_SIZE) / BLOCK_SIZE;
-						// unsigned long long int rp_pos = (new_combined_node_s+1);
-						// struct timeval begin_sort, end_sort;
-						// gettimeofday(&begin_sort, 0);
-						// sorting_col_idx<<<grid_size_G, BLOCK_SIZE>>>(d_row_ptr_dir, d_col_idx_dir, rp_pos);
-						// cudaDeviceSynchronize();
-						// gettimeofday(&end_sort, 0);
-						// long seconds_sort = end_sort.tv_sec - begin_sort.tv_sec;
-						// long microseconds_sort = end_sort.tv_usec - begin_sort.tv_usec;
-						// double elapsed_sort = seconds_sort + microseconds_sort*1e-6;
-						// cout<<"Time measured for sorting: "<<elapsed_sort<<" seconds."<<endl;
-						// total_kernel_time += elapsed_sort;
-
-						// struct timeval begin_sort, end_sort;
-						// gettimeofday(&begin_sort, 0);
-						// // Define grid and block dimensions
-						// unsigned long long int threadsPerBlock = 256;
-						// unsigned long long int blocksPerGrid = (rp_pos + threadsPerBlock - 1) / threadsPerBlock;
-						//
-						// // Launch the kernel
-						// thrust_sorting_col_idx<<<blocksPerGrid, threadsPerBlock>>>(d_row_ptr_dir, d_col_idx_dir, rp_pos);
-						// cudaDeviceSynchronize();
-						// gettimeofday(&end_sort, 0);
-						// long seconds_sort = end_sort.tv_sec - begin_sort.tv_sec;
-						// long microseconds_sort = end_sort.tv_usec - begin_sort.tv_usec;
-						// double elapsed_sort = seconds_sort + microseconds_sort*1e-6;
-						// cout<<"Time measured for thrust sorting: "<<elapsed_sort<<" seconds."<<endl;
-						// total_kernel_time += elapsed_sort;
-
-
-
 						gettimeofday(&end_exe, 0);
 						long seconds_exe = end_exe.tv_sec - begin_exe.tv_sec;
 						long microseconds_exe = end_exe.tv_usec - begin_exe.tv_usec;
@@ -983,31 +864,6 @@ void create_subgraph_with_halo(unsigned long long nopart,  unsigned long long *n
             }
             outfile<<endl;
             cout<<endl;
-            // for (unsigned long long i = 0; i < row_ptr_part_size; i++) {
-        //     outfile << row_ptr_part[i] << " ";
-        // }
-        // outfile << endl;
-        // for (unsigned long long i = 0; i < col_idx_part_size; i++) {
-        //     outfile << col_idx_part[i] << " ";
-        // }
-        // outfile << endl;
-        // cout<<"Row ptr and COl idx made"<<endl;
-
-        // Free dynamically allocated memory
-
-        // cout<<"Row pounsigned long longer part:"<<endl;
-        // for(unsigned long long i = 0; i<row_ptr_part_size; i++){ cout<<row_ptr_part[i]<<" "; }
-        // cout<<endl;
-        // cout<<"Col index part:"<<endl;
-        // for(unsigned long long i = 0; i<col_idx_part_size; i++){ cout<<col_idx_part[i]<<" "; }
-        // cout<<endl;
-        // thrust::host_vector<unsigned long long> in_deg = indegree;
-        // cout<<"Indegree"<<endl;
-        // for(unsigned long long i = 0; i<in_deg.size(); i++){
-        //     cout<<in_deg[i]<<" ";
-        // }
-        // cout<<endl;
-         // Write to output file
 
         free(indices);
         // free(h_halo_nodes);
@@ -1040,8 +896,8 @@ void create_subgraph_with_halo(unsigned long long nopart,  unsigned long long *n
         cudaFree(d_indegree);
     }
 
-    cout<<"Total Kernel Time: "<<total_kernel_time<<" seconds."<<endl;
-		cout<<"Total EXE Time: "<<total_exe_time<<" seconds."<<endl;
+    cout<<"Total EXE Time: "<<total_kernel_time<<" seconds."<<endl;
+		// cout<<"Total EXE Time: "<<total_exe_time<<" seconds."<<endl;
    outfile.close();
 }
 
@@ -1127,7 +983,7 @@ int main(int argc, char *argv[])
     long seconds = end.tv_sec - begin.tv_sec;
     long microseconds = end.tv_usec - begin.tv_usec;
     double elapsed = seconds + microseconds*1e-6;
-    cout<<"Time measured:"<<elapsed<<" seconds."<<endl;
+    cout<<"Total Time measured:"<<elapsed<<" seconds."<<endl;
 
     return 0;
 }
